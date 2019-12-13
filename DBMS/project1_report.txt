@@ -1,0 +1,104 @@
+1. Basic information
+Student ID : 59265871, 18686445
+Student Name : Chen He, Yi Zhou
+OS (bit) : Ubuntu (64-bit)
+gcc version : 5.4.0
+
+
+2. Internal Record Format
+- Show your record format design and describe how your design satisfies O(1) field access. If not, just mention that you haven't implemented this feature.
+- Describe how you store a VarChar field.
+
+The text description is below and another one in BNF format is located at the end of this file
+Each record is seperated into two part. The first part is Index part. Each index is fixed size of short(2 byte) and indicates the end positon of each corresponding attribute. The second part is the attributes themselves
+When retriving the attribute, find the corresponding index, in O(1) since the size is fixed, to get the end point of that attribute and find the index of the attribute before this one to get the start point. Then this attribute can be retrived in O(1) with the start and end point.
+if the attribute begin point is the same as the end point, it means this attribute is null.
+
+|           |         |         |	   |	      |
+|TotalLength|EndPoint1|EndPoint2|Attribute1|Attribute2|
+|	    |	      |	        |	   |	      |
+
+For example, look at the plot above:
+
+If we want to get the attribute1, just use the start location of the whole record(which has been already saved at the beginning of our file), and then add sizeof(short) * (1 + Totallength) to get the Start1 of Attribute1, and then get Endpoint1, Endpoint1 - Start1 is the length of Attribute1;
+If we want to get Attribute2, we can easily by add some offset to get Endpoint1 and EndPoint2 and then use EndPoint2 - EndPoint2 to get the length of attribute2, then get the memory which stores the Attribute2
+
+
+When storing VarChar, we use the index described above to retrive the attribute begin point and end point. We also put an additional '\0' at the end of each string to distingish the empty string with null. 
+Each string should be length of n+1, where n is the original length. Empty string will be Length 1 and null is length 0 specially. The last char(which is the additional '\0' we put) will be ignored when converting back to original data.
+
+3. Page Format
+- Show your page format design
+
+The text description is below and another one in BNF format is located at the end of this file
+The page has three part, header, empty and record. 
+Header is at the begining of the page. It consists of three part, AvailableSpace, SlotCount, and any number of slots. The first two are both short(2 byte) and each slot is 2 shorts(4 byte).
+Each slot is consists of RecordBegin and RecordLength, which is both short. At first there will be only availableSpace and slotCount and new slot will be created when new record inserts
+Empty part is in the middle and will decrease size as the new slot and record creates
+The record is inserting from the end of the page to the front.
+
+4. Implementation Detail
+- Other implementation details goes here.
+
+I believe the above explanation is enough and I don't know what else to talk about here.
+
+5. Other (optional)
+- Freely use this section to tell us about things that are related to the project 1, but not related to the other sections (optional)
+
+We use a hidden page at the beginning of each file to store readPageCounter, writePageCounter,appendPageCounter and pageNumCounter, the hidden page will be refreshed to disk each time when we close such file
+
+
+BNF Format
+File:
+	Hidden Page
+	Page*
+
+Hidden Page:
+    int{4}
+
+Page:
+	Header
+	Empty*
+	Record*
+
+Header:
+	AvailableSpace
+	SlotCount
+	Slot1Length
+	Slot1Start
+	Slot2Length
+	Slot2Start
+	Slot3Length
+	...........
+
+AvailableSpace:
+	short
+
+SlotCount:
+	short
+
+Slot:
+	RecordBegin
+	RecordLength
+
+RecordBegin:
+	short
+
+RecordLength:
+	short
+
+Empty:
+	0x0
+
+Record:
+	Index*
+	Attribute*
+
+Index:
+	TotalLength of Record
+	EndPoint1
+	EndPoint2
+	.........
+
+Attribute:
+	byte*

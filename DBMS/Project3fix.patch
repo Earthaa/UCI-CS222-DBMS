@@ -1,0 +1,244 @@
+From df84e5fb1836e10f1345eac2db02a458e8ae51c4 Mon Sep 17 00:00:00 2001
+From: Yicong-Huang <hyc541978023@gmail.com>
+Date: Wed, 6 Nov 2019 21:52:17 -0800
+Subject: [PATCH] fixed ix private tests
+
+---
+ ix/ixtest_p1.cc | 36 +++++++++++++++++++++---------------
+ ix/ixtest_p2.cc | 45 +++++++++++++++++++++++++++------------------
+ ix/ixtest_p4.cc | 24 +++++++++++++++---------
+ 3 files changed, 63 insertions(+), 42 deletions(-)
+
+diff --git a/ix/ixtest_p1.cc b/ix/ixtest_p1.cc
+index d06fc41..7e03bb3 100644
+--- a/ix/ixtest_p1.cc
++++ b/ix/ixtest_p1.cc
+@@ -1,6 +1,20 @@
+ #include "ix.h"
+ #include "ix_test_util.h"
+ 
++RC closeWithFail(const string &indexFileName1, const string &indexFileName2, IXFileHandle &ixFileHandle1,
++                 IXFileHandle &ixFileHandle2, IX_ScanIterator &ix_ScanIterator1, IX_ScanIterator &ix_ScanIterator2) {
++    ix_ScanIterator1.close();
++    ix_ScanIterator2.close();
++
++    indexManager.closeFile(ixFileHandle1);
++    indexManager.closeFile(ixFileHandle2);
++
++    indexManager.destroyFile(indexFileName1);
++    indexManager.destroyFile(indexFileName2);
++
++    return fail;
++}
++
+ int testCase_p1(const std::string &indexFileName1, const std::string &indexFileName2, const Attribute &attribute) {
+     // Check whether multiple indexes can be used at the same time.
+     std::cerr << std::endl << "***** In IX Test Private Case 1 *****" << std::endl;
+@@ -82,11 +96,13 @@ int testCase_p1(const std::string &indexFileName1, const std::string &indexFileN
+ 
+         if (ix_ScanIterator2.getNextEntry(rid2, &key2) != success) {
+             std::cerr << "Wrong entries output...failure" << std::endl;
+-            goto error_close_scan;
++            return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                                 ix_ScanIterator2);
+         }
+         if (rid.pageNum != rid2.pageNum) {
+             std::cerr << "Wrong entries output...failure" << std::endl;
+-            goto error_close_scan;
++            return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                                 ix_ScanIterator2);
+         }
+         if (rid.pageNum % 1000 == 0) {
+             std::cerr << returnedCount << " - returned entries: " << rid.pageNum << " " << rid.slotNum << std::endl;
+@@ -96,7 +112,9 @@ int testCase_p1(const std::string &indexFileName1, const std::string &indexFileN
+ 
+     if (inRidPageNumSum != outRidPageNumSum) {
+         std::cerr << "Wrong entries output...failure" << std::endl;
+-        goto error_close_scan;
++        return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                             ix_ScanIterator2);
++
+     }
+ 
+     // Close Scan
+@@ -123,18 +141,6 @@ int testCase_p1(const std::string &indexFileName1, const std::string &indexFileN
+     assert(rc == success && "indexManager::destroyFile() should not fail.");
+ 
+     return success;
+-
+-    error_close_scan: //close scan
+-    ix_ScanIterator1.close();
+-    ix_ScanIterator2.close();
+-
+-    indexManager.closeFile(ixFileHandle1);
+-    indexManager.closeFile(ixFileHandle2);
+-
+-    indexManager.destroyFile(indexFileName1);
+-    indexManager.destroyFile(indexFileName2);
+-
+-    return fail;
+ }
+ 
+ int main() {
+diff --git a/ix/ixtest_p2.cc b/ix/ixtest_p2.cc
+index 5c45985..753048c 100644
+--- a/ix/ixtest_p2.cc
++++ b/ix/ixtest_p2.cc
+@@ -1,7 +1,22 @@
+ #include <algorithm>
++#include <random>
+ #include "ix.h"
+ #include "ix_test_util.h"
+ 
++RC closeWithFail(const string &indexFileName1, const string &indexFileName2, IXFileHandle &ixFileHandle1,
++                 IXFileHandle &ixFileHandle2, IX_ScanIterator &ix_ScanIterator1, IX_ScanIterator &ix_ScanIterator2) {
++    ix_ScanIterator1.close();
++    ix_ScanIterator2.close();
++
++    indexManager.closeFile(ixFileHandle1);
++    indexManager.closeFile(ixFileHandle2);
++
++    indexManager.destroyFile(indexFileName1);
++    indexManager.destroyFile(indexFileName2);
++
++    return fail;
++}
++
+ int testCase_p2(const std::string &indexFileName1, const std::string &indexFileName2, const Attribute &attribute) {
+ 
+     // insert 30,000 entries to two indexes
+@@ -48,7 +63,7 @@ int testCase_p2(const std::string &indexFileName1, const std::string &indexFileN
+     }
+ 
+     // Randomly shuffle the entries
+-    std::random_shuffle(A, A + numOfTuples);
++    std::shuffle(A, A + numOfTuples, std::mt19937(std::random_device()()));
+ 
+     // Insert entries
+     for (int i = 0; i < numOfTuples; i++) {
+@@ -78,7 +93,8 @@ int testCase_p2(const std::string &indexFileName1, const std::string &indexFileN
+         if (ix_ScanIterator2.getNextEntry(rid2, &key2) != success
+             || rid.pageNum != rid2.pageNum) {
+             std::cerr << "Wrong entries output...failure" << std::endl;
+-            goto error_close_scan;
++            return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                                 ix_ScanIterator2);
+         }
+ 
+         // delete entry
+@@ -92,7 +108,9 @@ int testCase_p2(const std::string &indexFileName1, const std::string &indexFileN
+     }
+     if (count != 5001) {
+         std::cerr << count << " - Wrong entries output...failure" << std::endl;
+-        goto error_close_scan;
++        return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                             ix_ScanIterator2);
++
+     }
+ 
+     // close scan
+@@ -135,17 +153,20 @@ int testCase_p2(const std::string &indexFileName1, const std::string &indexFileN
+     while (ix_ScanIterator1.getNextEntry(rid, &key) == success) {
+         if (ix_ScanIterator2.getNextEntry(rid2, &key) != success) {
+             std::cerr << "Wrong entries output...failure" << std::endl;
+-            goto error_close_scan;
++            return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                                 ix_ScanIterator2);
+         }
+         if (rid.pageNum > 20000 && B[rid.pageNum - 20001] > 35000) {
+             std::cerr << "Wrong entries output...failure" << std::endl;
+-            goto error_close_scan;
++            return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                                 ix_ScanIterator2);
+         }
+         count++;
+     }
+     if (count != 30000) {
+         std::cerr << count << " - Wrong entries output...failure" << std::endl;
+-        goto error_close_scan;
++        return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2, ix_ScanIterator1,
++                             ix_ScanIterator2);
+     }
+ 
+     //close scan
+@@ -171,18 +192,6 @@ int testCase_p2(const std::string &indexFileName1, const std::string &indexFileN
+     assert(rc == success && "indexManager::destroyFile() should not fail.");
+ 
+     return success;
+-
+-    error_close_scan: //close scan
+-    ix_ScanIterator1.close();
+-    ix_ScanIterator2.close();
+-
+-    indexManager.closeFile(ixFileHandle1);
+-    indexManager.closeFile(ixFileHandle2);
+-
+-    indexManager.destroyFile(indexFileName1);
+-    indexManager.destroyFile(indexFileName2);
+-
+-    return fail;
+ }
+ 
+ int main() {
+diff --git a/ix/ixtest_p4.cc b/ix/ixtest_p4.cc
+index 42970d3..ad60f97 100644
+--- a/ix/ixtest_p4.cc
++++ b/ix/ixtest_p4.cc
+@@ -2,6 +2,16 @@
+ #include "ix.h"
+ #include "ix_test_util.h"
+ 
++RC closeWithFail(const string &indexFileName1, const string &indexFileName2, IXFileHandle &ixFileHandle1,
++                 IXFileHandle &ixFileHandle2) {
++    indexManager.closeFile(ixFileHandle1);
++    indexManager.closeFile(ixFileHandle2);
++    indexManager.destroyFile(indexFileName1);
++    indexManager.destroyFile(indexFileName2);
++
++    return fail;
++}
++
+ int testCase_p4(const std::string &indexFileName1, const Attribute &attribute1, const std::string &indexFileName2,
+                 const Attribute &attribute2) {
+     // Checks whether varchar key is handled properly.
+@@ -67,13 +77,14 @@ int testCase_p4(const std::string &indexFileName1, const Attribute &attribute1,
+ 
+     if (writePage1 < 1) {
+         std::cerr << "Did not use disk at all. Test failed." << std::endl;
+-        goto error_close_index;
++        return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2);
++
+     }
+ 
+     // Actually, there should be no difference.
+     if (writePage2 + appendPage2 - writePage1 - appendPage1 > 10) {
+         std::cerr << "Failed to handle space nicely for VarChar keys..." << std::endl;
+-        goto error_close_index;
++        return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2);
+     }
+ 
+     *(int *) lowKey = 5;
+@@ -92,18 +103,13 @@ int testCase_p4(const std::string &indexFileName1, const Attribute &attribute1,
+     while (ix_ScanIterator1.getNextEntry(rid, &key) != IX_EOF) {
+         if (ix_ScanIterator2.getNextEntry(rid, &key) != success) {
+             std::cerr << "Wrong entries output...failure" << std::endl;
+-            goto error_close_index;
++            return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2);
+         }
+         count++;
+     }
+     if (count != 100) {
+         std::cerr << "Wrong output count! expected: 100, actual: " << count << " ...Failure" << std::endl;
+-        indexManager.closeFile(ixFileHandle1);
+-        indexManager.closeFile(ixFileHandle2);
+-        indexManager.destroyFile(indexFileName1);
+-        indexManager.destroyFile(indexFileName2);
+-
+-        return fail;
++        return closeWithFail(indexFileName1, indexFileName2, ixFileHandle1, ixFileHandle2);
+     }
+ 
+ 
+-- 
+2.21.0 (Apple Git-120)
+

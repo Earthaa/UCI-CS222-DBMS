@@ -1,0 +1,114 @@
+1. Basic information
+Team number (e.g., 01): 28
+#1 Student ID: 59265871
+#1 Student Name: Chen He
+#2 Student ID: 18686445
+#2 Student Name: Yi Zhou
+OS (bit): Ubuntu (64-bit)
+gcc version: 5.4.0
+
+
+2. Meta-data
+- Show your meta-data design (Tables and Columns table) and information about each column.
+
+Tables is consisted of table-id, table-name, file-name, mark, current-version.
+table-id is int and is assigned by hash value from the table-name to prevent conflict.
+table-name is string and is provided when creating the table.
+file-name is string and is created from table-name by adding ".bin" at the end. Tables and Columns are the filename itself specially.
+mark is byte and current-version is int. They are left for extra credit part and are not used in the end.
+
+Columns is consisted of table-id, column-name, column-type, column-length, column-position, version, first-create-version
+table-id is the same above.
+column-name is string, column-type is int and column-length is int. They are constructed from the Attribute class provided.
+column-position is int and is to store the position of this Attribute in that table.
+version and first-create-version are int and they are left for extra credit part, which are not used in the end.
+
+
+3. Internal Record Format
+- Show your record format design and describe how your design satisfies O(1) field access. If not, just mention that your team hasn't implemented this feature.
+
+- Describe how you store a VarChar field.
+
+- Describe how you deal with an update and delete.
+
+
+Each record is separated into two part. The first part is Index part. Each index is fixed size of short(2 byte) and indicates the end position of each corresponding attribute. The second part is the attributes themselves
+When retrieving the attribute, find the corresponding index, in O(1) since the size is fixed, to get the end point of that attribute and find the index of the attribute before this one to get the start point. Then this attribute can be retrived in O(1) with the start and end point.
+if the attribute begin point is the same as the end point, it means this attribute is null.
+
+	 |	 |                     |         |         |	      |	         |  
+CheckByte|Version|4bytes For Future Use|EndPoint1|EndPoint2|Attribute1|Attribute2|
+	 |	 |	               |	 |	   |          |	         |	      
+ 
+For example, look at the plot above, a typical record:
+
+
+
+	 |	 |
+CheckByte|PageNum|SlotNum
+	 |	 |
+
+And for pointer record, look at the plot above
+
+If we want to get the attribute1, just use the start location of the whole record(which has been already saved at the beginning of our file), and then add sizeof(short) * (1 + Totallength) to get the Start1 of Attribute1, and then get Endpoint1, Endpoint1 - Start1 is the length of Attribute1;
+If we want to get Attribute2, we can easily by add some offset to get Endpoint1 and EndPoint2 and then use EndPoint2 - EndPoint2 to get the length of attribute2, then get the memory which stores the Attribute2
+
+
+VarChar:
+When storing VarChar, we use the index described above to retrieve the attribute begin point and end point. We also put an additional '\0' at the end of each string to distinguish the empty string with null. 
+Each string should be length of n+1, where n is the original length. Empty string will be Length 1 and null is length 0 specially. The last char(which is the additional '\0' we put) will be ignored when converting back to original data.
+
+
+Delete and Update:
+There are additional hidden space of 4 byte in the record so that the normal record is at least 9 byte (record of one null string), which should be larger than or equal to the 9 bytes pointer record(1 byte for checkByte and 8 byte for rid);
+There is one byte of mark in the record. One bit of it is to indicate if it is pointer record to other page or it is real record.
+Another one bit is to indicate if it is in the original space or is in the transfer space to avoid duplication in scan.
+
+4. Page Format
+- Show your page format design.
+
+- Describe how you deal with an update and delete.
+
+- Show your page format design
+
+
+The page has three part, header, empty and record. 
+Header is at the beginning of the page. It consists of three part, AvailableSpace, SlotCount, and any number of slots. The first two are both short(2 byte) and each slot is 2 shorts(4 byte).
+Each slot is consists of RecordBegin and RecordLength, which is both short. At first there will be only availableSpace and slotCount and new slot will be created when new record inserts
+Empty part is in the middle and will decrease size as the new slot and record creates
+The record is inserting from the end of the page to the front.
+
+
+Delete:
+first check if the rid is pointed to the real record or just a pointer record that points to other pages. If it's the pointer record, use loop to go to the real one.
+Then transfer all the records, which are before the deleted one, the distance of the length of the deleted record to the back. ( our records are located at the back of the page while slots in the front of the page)
+update all the dataBegin of the slots that originally smaller than the beginning of the deleted record by plus the length of the deleted record.
+in the end, write 0 to the slot of the deleted record to indicate it is gone, since the record can not begin at 0 and can not have size of 0
+
+
+Update:
+first check if the rid is pointed to the real record or just a pointer record that points to other pages. If it's the pointer record, use loop to go to the real one.
+there are two situation:
+the first one is that the original page still can contain it after updating. Then all the records, which are before the deleted one, will be transferred left/right, depends on the record grows or shrinks. The transfer distance is the delta between old and new records.
+Then the all the slots will be updated accordingly.
+
+The second is that the original page can't contain the new record. The new record will be inserted into a new page and return with the new rid. The space in the original record will be converted to pointer record, which stores the new rid.
+Then all the records, which are before the updated one, will be transferred by the distance of the delta between old record and pointer record. All the slots will be updated accordingly.
+
+
+5. File Format
+- Show your file format design
+In each file, there is a hidden page which stores readPageCount, writePageCount and appendPageCount. This is controlled by pfm. The remaining pages store the records.
+Each file name is created by adding ".bin" at the end of table name. Tables and Columns are the name itself specially.
+Each file only stores records for the same table name.
+There is no specific design for our file, no other hidden pages and no any cache.
+
+
+6. Implementation Detail
+- Other implementation details goes here.
+For mark or which is called checkByte, if the first bit is 1 means it's a pointer, if the second bit is 1 means this record  is not in this page(there is a pointer in other page point to this record) and we will skip it when scan this page.
+
+We add version and created version for each column, just for the preparation of extra credit. They do not have any influence.
+
+7. Other (optional)
+- Freely use this section to tell us about things that are related to the project 2, but not related to the other sections (optional)

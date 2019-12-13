@@ -1,0 +1,74 @@
+1. Basic information
+Team number (e.g., 01): 28
+#1 Student ID: 59265871
+#1 Student Name: Chen He
+#2 Student ID: 18686445
+#2 Student Name: Yi Zhou
+OS (bit): Ubuntu (64-bit)
+gcc version: 5.4.0
+
+
+2. Meta-data page in an index file
+- Show your meta-data page of an index design if you have any. 
+
+As necessary we save three counters in hidden file, besides, we also save the root of the whole index file
+3. Index Entry Format
+
+- Show your index entry design (structure). 
+
+Non-Leaf Node:
+|      |               |
+| left | key(with rid) | right
+|      |               |
+
+Leaf-Node:
+
+|               |
+| key(with rid) |
+|               |
+
+The left and right are the page num in index file of left and right page
+
+4. Page Format
+- Show your internal-page (non-leaf node) design.
+We use the following structure as non-leaf node header, when layer is not 0, it means current
+page is a non-leaf node else it is a leaf node.
+
+The Layer, FreeBytes, Count and Parent are all four bytes integer, while the offset is a series of 
+tuples (Start, Length) which means the start position of each index entry and the length of it.
+
+All index entries are align with the end of each page(the start cursor is 4096)
+
+and they are sorted from left to right in an increasing order
+
+	|	  |     |      |         
+Layer   |FreeBytes|Count|Parent|offset
+	|	  |	|      |	 	
+
+
+- Show your leaf-page (leaf node) design.
+
+The whole structure is similar to the structure of internal leaf and when layer is 0, it means a 
+leaf-page. Besides, we also save the previous and next page ID in the header.
+
+	 |	   |     |      |          |      |
+Layer    |FreeBytes|Count|Parent| previous | next | offset
+	 |	   |	 |	|	   |      |
+
+5. Implementation Detail
+- Have you added your own source file (.cc or .h)?
+No
+- Have you implemented non-lazy deletion? Choose Yes or No: 
+No
+- Have you implemented duplicated key handling that can span multiple pages? Choose Yes or No: 
+  If yes, please explain briefly how you have implemented this feature.
+Yes
+
+We save rid with key in the internal pages.
+
+- Other implementation details:
+
+
+6. Other (optional)
+- Freely use this section to tell us about things that are related to the project 3, but not related to the other sections (optional)
+

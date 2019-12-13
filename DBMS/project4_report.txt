@@ -1,0 +1,55 @@
+1. Basic information
+Team number (e.g., 01): 28
+#1 Student ID: 59265871
+#1 Student Name: Chen He
+#2 Student ID: 18686445
+#2 Student Name: Yi Zhou
+OS (bit): Ubuntu (64-bit)
+gcc version: 5.4.0
+
+
+2. Catalog information about Index
+- Show your catalog information about an index (tables, columns). 
+For each table, we create a new table to save the index information about this table, named it as {tableName}$indexMeta.bin, and we save the name of attributes, type of attributes and the length file in this table. Each time when create or drop index, we update this table. When we create or delete a new table, this meta table is also created automatically.
+
+3. Block Nested Loop Join (If you have implemented this feature)
+- Describe how your block nested loop join works (especially, how you manage the given buffers.)
+
+For Block Nested Loop Join, first load the block of tuples from the left into map. Each size of the tuple is calculated and compared to make sure the loading tuples doesn't exceed the memory requirement.
+The value in the map is vector because it may contain multiple tuples with the same key value.
+Then search through the tuples in the right and check if there's matches in the map. Each tuple from the right has counter to record their position in the vector in the map to handle duplications.
+After exhausting the tuples from the right, clear the map, read next block of tuples from the left into map, reset the right iterator and then continue searching.
+
+4. Index Nested Loop Join (If you have implemented this feature)
+- Describe how your grace hash join works.
+
+For Index Nested Loop Join, I first read the tuple from the left and store it. Then I walked through each tuple from the right and return as output data if matches.
+When the tuple from right exhausted, I read the next tuple from the left, reset the right iterator and continue searching until reach the end of the left.
+
+5. Grace Hash Join (If you have implemented this feature)
+- Describe how your grace hash join works (especially, in-memory structure).
+
+
+6. Aggregation
+- Describe how your aggregation (basic, group-based hash) works.
+
+For basic aggregation, go through the tuples from the input, increment the counter and then each operation is handled differentlly;
+MAX: compare the saved value and current value and record the bigger one.
+MIN: compare the saved value and current value and record the smaller one.
+COUNT: does nothing since counter is incremented anyway.
+SUM: adding the saved value with the current value.
+AVG: calculate the sum and divide by counter in the end.
+
+Doesn't implement group-based hash
+
+7. Implementation Detail
+- Have you added your own source file (.cc or .h)?
+
+- Have you implemented any optional features? Then, describe them here.
+
+- Other implementation details:
+I believe I have nothing more to say
+
+6. Other (optional)
+- Freely use this section to tell us about things that are related to the project 4, but not related to the other sections (optional)
+

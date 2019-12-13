@@ -1,0 +1,2753 @@
+From 16fb86162da83ae02ba5ba9cff025f5370235f1d Mon Sep 17 00:00:00 2001
+From: Yicong-Huang <hyc541978023@gmail.com>
+Date: Mon, 7 Oct 2019 09:16:34 -0700
+Subject: [PATCH] Project 2
+
+---
+ .gitignore                 |   8 +-
+ CMakeLists.txt             |  12 +-
+ README.md                  |  38 +++-
+ project2_report.txt        |  40 ++++
+ rbf/makefile               |   8 +-
+ rbf/rbftest_delete.cc      | 159 ++++++++++++++
+ rbf/rbftest_update.cc      | 159 ++++++++++++++
+ rm/makefile                |  66 ++++++
+ rm/rm.cc                   |  83 +++++++
+ rm/rm.h                    |  77 +++++++
+ rm/rm_test_util.h          | 431 +++++++++++++++++++++++++++++++++++++
+ rm/rmtest_00.cc            |  26 +++
+ rm/rmtest_01.cc            |  62 ++++++
+ rm/rmtest_02.cc            |  61 ++++++
+ rm/rmtest_03.cc            |  75 +++++++
+ rm/rmtest_04.cc            |  55 +++++
+ rm/rmtest_05.cc            |  69 ++++++
+ rm/rmtest_06.cc            |  69 ++++++
+ rm/rmtest_07.cc            |  53 +++++
+ rm/rmtest_08.cc            |  53 +++++
+ rm/rmtest_09.cc            |  58 +++++
+ rm/rmtest_10.cc            |  72 +++++++
+ rm/rmtest_11.cc            |  44 ++++
+ rm/rmtest_12.cc            |  70 ++++++
+ rm/rmtest_13.cc            |  78 +++++++
+ rm/rmtest_13b.cc           | 122 +++++++++++
+ rm/rmtest_14.cc            |  69 ++++++
+ rm/rmtest_15.cc            |  72 +++++++
+ rm/rmtest_create_tables.cc |  41 ++++
+ rm/rmtest_delete_tables.cc |  35 +++
+ rm/rmtest_extra_1.cc       |  84 ++++++++
+ rm/rmtest_extra_2.cc       |  76 +++++++
+ 32 files changed, 2410 insertions(+), 15 deletions(-)
+ create mode 100755 project2_report.txt
+ create mode 100644 rbf/rbftest_delete.cc
+ create mode 100644 rbf/rbftest_update.cc
+ create mode 100644 rm/makefile
+ create mode 100755 rm/rm.cc
+ create mode 100755 rm/rm.h
+ create mode 100644 rm/rm_test_util.h
+ create mode 100644 rm/rmtest_00.cc
+ create mode 100644 rm/rmtest_01.cc
+ create mode 100644 rm/rmtest_02.cc
+ create mode 100644 rm/rmtest_03.cc
+ create mode 100644 rm/rmtest_04.cc
+ create mode 100644 rm/rmtest_05.cc
+ create mode 100644 rm/rmtest_06.cc
+ create mode 100644 rm/rmtest_07.cc
+ create mode 100644 rm/rmtest_08.cc
+ create mode 100644 rm/rmtest_09.cc
+ create mode 100644 rm/rmtest_10.cc
+ create mode 100644 rm/rmtest_11.cc
+ create mode 100644 rm/rmtest_12.cc
+ create mode 100644 rm/rmtest_13.cc
+ create mode 100644 rm/rmtest_13b.cc
+ create mode 100644 rm/rmtest_14.cc
+ create mode 100644 rm/rmtest_15.cc
+ create mode 100644 rm/rmtest_create_tables.cc
+ create mode 100644 rm/rmtest_delete_tables.cc
+ create mode 100644 rm/rmtest_extra_1.cc
+ create mode 100644 rm/rmtest_extra_2.cc
+
+diff --git a/.gitignore b/.gitignore
+index d99efa9..c3df579 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -29,4 +29,10 @@
+ # Executables
+ *.exe
+ *.out
+-*.app
+\ No newline at end of file
++*.app
++
++# Project files
++tbl_*
++Tables
++Columns
++*_file
+\ No newline at end of file
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 61383a2..4063fba 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,10 +1,10 @@
+-cmake_minimum_required(VERSION 3.14)
++cmake_minimum_required(VERSION 2.8)
+ project(cs222_fall19)
+ 
+ set(CMAKE_CXX_STANDARD 11)
+ 
+ add_custom_target(clean-all
+-        COMMAND rm Index* Indices* left* right* large* group* *out Tables Columns tbl_*)
++        COMMAND rm Index* Indices* left* right* large* group* *out Tables Columns tbl_* *_file)
+ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O1 -g  -fno-omit-frame-pointer")
+ if (CMAKE_BUILD_TYPE MATCHES Debug)
+     add_definitions(-DDEBUG=1)
+@@ -13,6 +13,7 @@ endif()
+ 
+ add_library(PFM ./rbf/pfm.cc)
+ add_library(RBFM ./rbf/rbfm.cc)
++add_library(RM ./rm/rm.cc ${RBFM})
+ 
+ 
+ file(GLOB files rbf/rbftest*.cc)
+@@ -20,4 +21,11 @@ foreach(file ${files})
+     get_filename_component(name ${file} NAME_WE)
+     add_executable(${name} ${file})
+     target_link_libraries(${name} RBFM PFM)
++endforeach()
++
++file(GLOB files rm/rmtest_*.cc)
++foreach(file ${files})
++    get_filename_component(name ${file} NAME_WE)
++    add_executable(${name} ${file})
++    target_link_libraries(${name} RM RBFM PFM)
+ endforeach()
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index 05dbdbc..cf28bb7 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,4 @@
+-By default you should not change those functions of the PagedFileManager,
+-FileHandle, and RecordBasedFileManager classes defined in rbf/pfm.h and rbf/rbfm.h.
++By default you should not change those functions of pre-defined in the given .h files.
+ If you think some changes are really necessary, please contact us first.
+ 
+ If you are not using CLion and want to use command line make tool:
+@@ -7,17 +6,36 @@ If you are not using CLion and want to use command line make tool:
+  - Modify the "CODEROOT" variable in makefile.inc to point to the root
+   of your code base if you can't compile the code.
+  
+- - Implement the Record-based Files (RBF) Component:
++ - Finish the Record-based Files (RBF) Component, and then implement the Relation Manager (RM):
+ 
+-   Go to folder "rbf" and type in:
++   Go to folder "rm" and test in the following order:
+ 
+    ```
+    make clean
+-   make
+-   ./rbftest_01         
++   make      
++   ./rmtest_create_tables
++   ./rmtest_00   
++   ./rmtest_01  
++   ./rmtest_02
++   ./rmtest_03
++   ./rmtest_04
++   ./rmtest_05
++   ./rmtest_06
++   ./rmtest_07
++   ./rmtest_08
++   ./rmtest_09
++   ./rmtest_10
++   ./rmtest_11
++   ./rmtest_12
++   ./rmtest_13
++   ./rmtest_13b
++   ./rmtest_14
++   ./rmtest_15
++   ./rmtest_extra_1
++   ./rmtest_extra_2
++   
+    ```
+ 
+-
+-   The program should run. But it will generates an error. You are supposed to
+-   implement the API of the paged file manager defined in pfm.h and some
+-   of the methods in rbfm.h as explained in the project description.
+\ No newline at end of file
++   The program should run. But initially it will generates an error. You are supposed to
++   implement the API of the rest of the methods in rbfm.h and methods in rm.h as explained 
++   in the project description.
+\ No newline at end of file
+diff --git a/project2_report.txt b/project2_report.txt
+new file mode 100755
+index 0000000..3e1c7af
+--- /dev/null
++++ b/project2_report.txt
+@@ -0,0 +1,40 @@
++1. Basic information
++Team number (e.g., 01):
++#1 Student ID:
++#1 Student Name:
++#2 Student ID:
++#2 Student Name:
++OS (bit):
++gcc version:
++
++
++2. Meta-data
++- Show your meta-data design (Tables and Columns table) and information about each column.
++
++
++3. Internal Record Format
++- Show your record format design and describe how your design satisfies O(1) field access. If not, just mention that your team hasn't implemented this feature.
++
++- Describe how you store a VarChar field.
++
++- Describe how you deal with an update and delete.
++
++
++4. Page Format
++- Show your page format design.
++
++- Describe how you deal with an update and delete.
++
++- Show your page format design
++
++
++5. File Format
++- Show your file format design
++
++
++6. Implementation Detail
++- Other implementation details goes here.
++
++
++7. Other (optional)
++- Freely use this section to tell us about things that are related to the project 2, but not related to the other sections (optional)
+\ No newline at end of file
+diff --git a/rbf/makefile b/rbf/makefile
+index a1380e1..33a00c1 100644
+--- a/rbf/makefile
++++ b/rbf/makefile
+@@ -1,6 +1,6 @@
+ include ../makefile.inc
+ 
+-all: librbf.a rbftest_01 rbftest_02 rbftest_03 rbftest_04 rbftest_05 rbftest_06 rbftest_07 rbftest_08 rbftest_08b rbftest_09 rbftest_10 rbftest_11 rbftest_12
++all: librbf.a rbftest_01 rbftest_02 rbftest_03 rbftest_04 rbftest_05 rbftest_06 rbftest_07 rbftest_08 rbftest_08b rbftest_09 rbftest_10 rbftest_11 rbftest_12 rbftest_update rbftest_delete
+ 
+ # c file dependencies
+ pfm.o: pfm.h
+@@ -23,6 +23,8 @@ rbftest_09.o: pfm.h rbfm.h
+ rbftest_10.o: pfm.h rbfm.h
+ rbftest_11.o: pfm.h rbfm.h
+ rbftest_12.o: pfm.h rbfm.h
++rbftest_update.o: pfm.h rbfm.h
++rbftest_delete.o: pfm.h rbfm.h
+ 
+ # binary dependencies
+ rbftest_01: rbftest_01.o librbf.a $(CODEROOT)/rbf/librbf.a
+@@ -38,6 +40,8 @@ rbftest_09: rbftest_09.o librbf.a $(CODEROOT)/rbf/librbf.a
+ rbftest_10: rbftest_10.o librbf.a $(CODEROOT)/rbf/librbf.a
+ rbftest_11: rbftest_11.o librbf.a $(CODEROOT)/rbf/librbf.a
+ rbftest_12: rbftest_12.o librbf.a $(CODEROOT)/rbf/librbf.a
++rbftest_update: rbftest_update.o librbf.a $(CODEROOT)/rbf/librbf.a
++rbftest_delete: rbftest_delete.o librbf.a $(CODEROOT)/rbf/librbf.a
+ 
+ # dependencies to compile used libraries
+ .PHONY: $(CODEROOT)/rbf/librbf.a
+@@ -46,4 +50,4 @@ $(CODEROOT)/rbf/librbf.a:
+ 
+ .PHONY: clean
+ clean:
+-	-rm rbftest_01 rbftest_02 rbftest_03 rbftest_04 rbftest_05 rbftest_06 rbftest_07 rbftest_08 rbftest_08b rbftest_09 rbftest_10 rbftest_11 rbftest_12 *.a *.o *~ 
++	-rm rbftest_01 rbftest_02 rbftest_03 rbftest_04 rbftest_05 rbftest_06 rbftest_07 rbftest_08 rbftest_08b rbftest_09 rbftest_10 rbftest_11 rbftest_12 rbftest_update rbftest_delete *.a *.o *~
+diff --git a/rbf/rbftest_delete.cc b/rbf/rbftest_delete.cc
+new file mode 100644
+index 0000000..df0f197
+--- /dev/null
++++ b/rbf/rbftest_delete.cc
+@@ -0,0 +1,159 @@
++#include <iostream>
++#include <cassert>
++#include <cstdlib>
++#include <cstring>
++#include <stdexcept>
++#include <cstdio>
++
++#include "pfm.h"
++#include "rbfm.h"
++#include "test_util.h"
++
++int RBFTest_Delete(RecordBasedFileManager &rbfm) {
++    // Functions tested
++    // 1. Create Record-Based File
++    // 2. Open Record-Based File
++    // 3. Insert Record (3)
++    // 4. Delete Record (1)
++    // 5. Read Record
++    // 6. Close Record-Based File
++    // 7. Destroy Record-Based File
++    std::cout << std::endl << "***** In RBF Test Case Delete *****" << std::endl;
++
++    RC rc;
++    std::string fileName = "test_delete";
++
++    rc = rbfm.createFile(fileName);
++    assert(rc == success && "Creating the file should not fail.");
++
++    rc = createFileShouldSucceed(fileName);
++    assert(rc == success && "Creating the file should not fail.");
++
++    // Open the file
++    FileHandle fileHandle;
++    rc = rbfm.openFile(fileName, fileHandle);
++    assert(rc == success && "Opening the file should not fail.");
++
++    RID rid;
++    int recordSize = 0;
++    void *record = malloc(100);
++    void *returnedData = malloc(100);
++
++    std::vector<Attribute> recordDescriptor;
++    createRecordDescriptor(recordDescriptor);
++
++    // Initialize a NULL field indicator
++    int nullFieldsIndicatorActualSize = getActualByteForNullsIndicator(recordDescriptor.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullFieldsIndicatorActualSize);
++    memset(nullsIndicator, 0, nullFieldsIndicatorActualSize);
++
++    // Insert a record into a file and print the record
++    prepareRecord(recordDescriptor.size(), nullsIndicator, 8, "Testcase", 25, 177.8, 6200, record,
++                  &recordSize);
++    std::cout << std::endl << "Inserting Data:" << std::endl;
++    rbfm.printRecord(recordDescriptor, record);
++
++    rc = rbfm.insertRecord(fileHandle, recordDescriptor, record, rid);
++    assert(rc == success && "Inserting a record should not fail.");
++    // save the returned RID
++    RID rid0 = rid;
++    std::cout << std::endl;
++
++    memset(nullsIndicator, 0, nullFieldsIndicatorActualSize);
++
++    // Insert a record into a file and print the record
++
++    nullsIndicator[0] = 128;
++    prepareRecord(recordDescriptor.size(), nullsIndicator, 0, "", 25, 177.8, 6200, record,
++                  &recordSize);
++    std::cout << std::endl << "Inserting Data:" << std::endl;
++    rbfm.printRecord(recordDescriptor, record);
++
++    rc = rbfm.insertRecord(fileHandle, recordDescriptor, record, rid);
++    assert(rc == success && "Inserting a record should not fail.");
++    // save the returned RID
++    RID rid1 = rid;
++
++    std::cout << std::endl << "Inserting Data:" << std::endl;
++    rbfm.printRecord(recordDescriptor, record);
++
++    rc = rbfm.insertRecord(fileHandle, recordDescriptor, record, rid);
++    assert(rc == success && "Inserting a record should not fail.");
++
++    std::cout << std::endl << "Inserting Data:" << std::endl;
++    rbfm.printRecord(recordDescriptor, record);
++
++    rc = rbfm.insertRecord(fileHandle, recordDescriptor, record, rid);
++
++    assert(rc == success && "Inserting a record should not fail.");
++
++    rc = rbfm.deleteRecord(fileHandle, recordDescriptor, rid0);
++    assert(rc == success && "Deleting a record should not fail.");
++
++    rc = rbfm.readRecord(fileHandle, recordDescriptor, rid0, returnedData);
++    assert(rc != success && "Reading a deleted record should fail.");
++
++    // Given the rid, read the record from file
++    rc = rbfm.readRecord(fileHandle, recordDescriptor, rid1, returnedData);
++    assert(rc == success && "Reading a record should not fail.");
++
++    std::cout << std::endl << "Returned Data:" << std::endl;
++    rbfm.printRecord(recordDescriptor, returnedData);
++
++    // Compare whether the two memory blocks are the same
++    if (memcmp(record, returnedData, recordSize) != 0) {
++        std::cout << "[FAIL] Test Case Delete Failed!" << std::endl << std::endl;
++        free(record);
++        free(returnedData);
++        free(nullsIndicator);
++        return -1;
++    }
++
++    rc = rbfm.insertRecord(fileHandle, recordDescriptor, record, rid);
++    assert(rc == success && "Inserting a record should not fail.");
++    assert(rid.slotNum == rid0.slotNum && "Inserted record should use previous deleted slot.");
++
++    // Given the rid, read the record from file
++    rc = rbfm.readRecord(fileHandle, recordDescriptor, rid, returnedData);
++    assert(rc == success && "Reading a record should not fail.");
++
++    std::cout << std::endl << "Returned Data:" << std::endl;
++    rbfm.printRecord(recordDescriptor, returnedData);
++
++    // Compare whether the two memory blocks are the same
++    if (memcmp(record, returnedData, recordSize) != 0) {
++        std::cout << "[FAIL] Test Case Delete Failed!" << std::endl << std::endl;
++        free(record);
++        free(returnedData);
++        free(nullsIndicator);
++        return -1;
++    }
++
++    std::cout << std::endl;
++
++    // Close the file
++    rc = rbfm.closeFile(fileHandle);
++    assert(rc == success && "Closing the file should not fail.");
++
++    // Destroy the file
++    rc = rbfm.destroyFile(fileName);
++    assert(rc == success && "Destroying the file should not fail.");
++
++    rc = destroyFileShouldSucceed(fileName);
++    assert(rc == success && "Destroying the file should not fail.");
++
++    free(record);
++    free(returnedData);
++    free(nullsIndicator);
++
++    std::cout << "RBF Test Case Delete Finished! The result will be examined." << std::endl << std::endl;
++
++    return 0;
++}
++
++int main() {
++    // To test the functionality of the record-based file manager
++    remove("test_delete");
++
++    return RBFTest_Delete(RecordBasedFileManager::instance());
++}
+\ No newline at end of file
+diff --git a/rbf/rbftest_update.cc b/rbf/rbftest_update.cc
+new file mode 100644
+index 0000000..1f8f3ac
+--- /dev/null
++++ b/rbf/rbftest_update.cc
+@@ -0,0 +1,159 @@
++#include <iostream>
++#include <cassert>
++#include <cstdlib>
++#include <cstring>
++#include <stdexcept>
++#include <cstdio>
++
++#include "pfm.h"
++#include "rbfm.h"
++#include "test_util.h"
++
++void *record = malloc(2000);
++void *returnedData = malloc(2000);
++std::vector<Attribute> recordDescriptor;
++unsigned char *nullsIndicator = NULL;
++FileHandle fileHandle;
++
++void readRecord(RecordBasedFileManager &rbfm, const RID &rid, const std::string &str) {
++    int recordSize;
++    prepareRecord(recordDescriptor.size(), nullsIndicator, str.length(), str, 25, 177.8, 6200,
++                  record, &recordSize);
++
++    RC rc = rbfm.readRecord(fileHandle, recordDescriptor, rid, returnedData);
++    assert(rc == success && "Reading a record should not fail.");
++
++    // Compare whether the two memory blocks are the same
++    assert(memcmp(record, returnedData, recordSize) == 0 && "Returned Data should be the same");
++}
++
++void insertRecord(RecordBasedFileManager &rbfm, RID &rid, const std::string &str) {
++    int recordSize;
++    prepareRecord(recordDescriptor.size(), nullsIndicator, str.length(), str, 25, 177.8, 6200,
++                  record, &recordSize);
++
++    RC rc = rbfm.insertRecord(fileHandle, recordDescriptor, record, rid);
++    assert(rc == success && "Inserting a record should not fail.");
++
++}
++
++void updateRecord(RecordBasedFileManager &rbfm, RID &rid, const std::string& str) {
++    int recordSize;
++    prepareRecord(recordDescriptor.size(), nullsIndicator, str.length(), str, 25, 177.8, 6200,
++                  record, &recordSize);
++
++    RC rc = rbfm.updateRecord(fileHandle, recordDescriptor, record, rid);
++    assert(rc == success && "Updating a record should not fail.");
++
++}
++
++int RBFTest_Update(RecordBasedFileManager &rbfm) {
++    // Functions tested
++    // 1. Create Record-Based File
++    // 2. Open Record-Based File
++    // 3. Insert Record
++    // 4. Read Record
++    // 5. Close Record-Based File
++    // 6. Destroy Record-Based File
++    std::cout << std::endl << "***** In RBF Test Case Update *****" << std::endl;
++
++    RC rc;
++    std::string fileName = "test_update";
++
++    // Create a file
++    rc = rbfm.createFile(fileName);
++    assert(rc == success && "Creating the file should not fail.");
++
++    rc = createFileShouldSucceed(fileName);
++    assert(rc == success && "Creating the file should not fail.");
++
++    // Open the file
++    rc = rbfm.openFile(fileName, fileHandle);
++    assert(rc == success && "Opening the file should not fail.");
++
++    RID rid;
++    createRecordDescriptor(recordDescriptor);
++    recordDescriptor[0].length = (AttrLength) 1000;
++
++    std::string longStr;
++    for (int i = 0; i < 1000; i++) {
++        longStr.push_back('a');
++    }
++
++    std::string shortStr;
++    for (int i = 0; i < 10; i++) {
++        shortStr.push_back('s');
++    }
++
++    std::string midString;
++    for (int i = 0; i < 100; i++) {
++        midString.push_back('m');
++    }
++
++    // Initialize a NULL field indicator
++    int nullFieldsIndicatorActualSize = getActualByteForNullsIndicator(recordDescriptor.size());
++    nullsIndicator = (unsigned char *) malloc(nullFieldsIndicatorActualSize);
++    memset(nullsIndicator, 0, nullFieldsIndicatorActualSize);
++
++    // Insert short record
++    insertRecord(rbfm, rid, shortStr);
++    RID shortRID = rid;
++
++    // Insert mid record
++    insertRecord(rbfm, rid, midString);
++    RID midRID = rid;
++
++    // Insert long record
++    insertRecord(rbfm, rid, longStr);
++
++    // update short record
++    updateRecord(rbfm, shortRID, midString);
++
++    //read updated short record and verify its content
++    readRecord(rbfm, shortRID, midString);
++
++    // insert two more records
++    insertRecord(rbfm, rid, longStr);
++    insertRecord(rbfm, rid, longStr);
++
++    // read mid record and verify its content
++    readRecord(rbfm, midRID, midString);
++
++    // update short record
++    updateRecord(rbfm, shortRID, longStr);
++
++    // read the short record and verify its content
++    readRecord(rbfm, shortRID, longStr);
++
++    // delete the short record
++    rbfm.deleteRecord(fileHandle, recordDescriptor, shortRID);
++
++    // verify the short record has been deleted
++    rc = rbfm.readRecord(fileHandle, recordDescriptor, shortRID, returnedData);
++
++    assert(rc != success && "Read a deleted record should not success.");
++
++    rc = rbfm.closeFile(fileHandle);
++    assert(rc == success && "Closing the file should not fail.");
++
++    // Destroy the file
++    rc = rbfm.destroyFile(fileName);
++    assert(rc == success && "Destroying the file should not fail.");
++
++    rc = destroyFileShouldSucceed(fileName);
++    assert(rc == success && "Destroying the file should not fail.");
++
++    free(record);
++    free(returnedData);
++    free(nullsIndicator);
++
++    std::cout << "RBF Test Case Update Finished! The result will be examined." << std::endl << std::endl;
++
++    return 0;
++}
++
++int main() {
++    // To test the functionality of the record-based file manager
++    remove("test_update");
++    return RBFTest_Update(RecordBasedFileManager::instance());
++}
+\ No newline at end of file
+diff --git a/rm/makefile b/rm/makefile
+new file mode 100644
+index 0000000..badcd2b
+--- /dev/null
++++ b/rm/makefile
+@@ -0,0 +1,66 @@
++include ../makefile.inc
++
++all: librm.a rmtest_create_tables rmtest_delete_tables rmtest_00 rmtest_01 rmtest_02 rmtest_03 rmtest_04 rmtest_05 rmtest_06 rmtest_07 rmtest_08 rmtest_09 rmtest_10 rmtest_11 rmtest_12 rmtest_13 rmtest_13b rmtest_14 rmtest_15 rmtest_extra_1 rmtest_extra_2
++
++# lib file dependencies
++librm.a: librm.a(rm.o)  # and possibly other .o files
++
++# c file dependencies
++rm.o: rm.h
++
++rmtest_00.o: rm.h rm_test_util.h
++rmtest_01.o: rm.h rm_test_util.h
++rmtest_02.o: rm.h rm_test_util.h
++rmtest_03.o: rm.h rm_test_util.h
++rmtest_04.o: rm.h rm_test_util.h
++rmtest_05.o: rm.h rm_test_util.h
++rmtest_06.o: rm.h rm_test_util.h
++rmtest_07.o: rm.h rm_test_util.h
++rmtest_08.o: rm.h rm_test_util.h
++rmtest_09.o: rm.h rm_test_util.h
++rmtest_10.o: rm.h rm_test_util.h
++rmtest_11.o: rm.h rm_test_util.h
++rmtest_12.o: rm.h rm_test_util.h
++rmtest_13.o: rm.h rm_test_util.h
++rmtest_13b.o: rm.h rm_test_util.h
++rmtest_14.o: rm.h rm_test_util.h
++rmtest_15.o: rm.h rm_test_util.h
++rmtest_extra_1.o: rm.h rm_test_util.h
++rmtest_extra_2.o: rm.h rm_test_util.h
++rmtest_create_tables.o: rm.h rm_test_util.h
++rmtest_delete_tables.o: rm.h rm_test_util.h
++
++# binary dependencies
++rmtest_create_tables: rmtest_create_tables.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_delete_tables: rmtest_delete_tables.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_00: rmtest_00.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_01: rmtest_01.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_02: rmtest_02.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_03: rmtest_03.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_04: rmtest_04.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_05: rmtest_05.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_06: rmtest_06.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_07: rmtest_07.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_08: rmtest_08.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_09: rmtest_09.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_10: rmtest_10.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_11: rmtest_11.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_12: rmtest_12.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_13: rmtest_13.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_13b: rmtest_13b.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_14: rmtest_14.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_15: rmtest_15.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_extra_1: rmtest_extra_1.o librm.a $(CODEROOT)/rbf/librbf.a
++rmtest_extra_2: rmtest_extra_2.o librm.a $(CODEROOT)/rbf/librbf.a
++
++# dependencies to compile used libraries
++.PHONY: $(CODEROOT)/rbf/librbf.a
++$(CODEROOT)/rbf/librbf.a:
++	$(MAKE) -C $(CODEROOT)/rbf librbf.a
++
++
++.PHONY: clean
++clean:
++	-rm rmtest_create_tables rmtest_delete_tables rmtest_00 rmtest_01 rmtest_02 rmtest_03 rmtest_04 rmtest_05 rmtest_06 rmtest_07 rmtest_08 rmtest_09 rmtest_10 rmtest_11 rmtest_12 rmtest_13 rmtest_13b rmtest_14 rmtest_15 rmtest_extra_1 rmtest_extra_2 *.a *.o *~ tbl_* Tables Columns rids_file sizes_file
++
++	$(MAKE) -C $(CODEROOT)/rbf clean
+\ No newline at end of file
+diff --git a/rm/rm.cc b/rm/rm.cc
+new file mode 100755
+index 0000000..cc7aa80
+--- /dev/null
++++ b/rm/rm.cc
+@@ -0,0 +1,83 @@
++#include "rm.h"
++
++RelationManager *RelationManager::_relation_manager = nullptr;
++
++RelationManager &RelationManager::instance() {
++    static RelationManager _relation_manager = RelationManager();
++    return _relation_manager;
++}
++
++RelationManager::RelationManager() = default;
++
++RelationManager::~RelationManager() { delete _relation_manager; }
++
++RelationManager::RelationManager(const RelationManager &) = default;
++
++RelationManager &RelationManager::operator=(const RelationManager &) = default;
++
++RC RelationManager::createCatalog() {
++    return -1;
++}
++
++RC RelationManager::deleteCatalog() {
++    return -1;
++}
++
++RC RelationManager::createTable(const std::string &tableName, const std::vector<Attribute> &attrs) {
++    return -1;
++}
++
++RC RelationManager::deleteTable(const std::string &tableName) {
++    return -1;
++}
++
++RC RelationManager::getAttributes(const std::string &tableName, std::vector<Attribute> &attrs) {
++    return -1;
++}
++
++RC RelationManager::insertTuple(const std::string &tableName, const void *data, RID &rid) {
++    return -1;
++}
++
++RC RelationManager::deleteTuple(const std::string &tableName, const RID &rid) {
++    return -1;
++}
++
++RC RelationManager::updateTuple(const std::string &tableName, const void *data, const RID &rid) {
++    return -1;
++}
++
++RC RelationManager::readTuple(const std::string &tableName, const RID &rid, void *data) {
++    return -1;
++}
++
++RC RelationManager::printTuple(const std::vector<Attribute> &attrs, const void *data) {
++    return -1;
++}
++
++RC RelationManager::readAttribute(const std::string &tableName, const RID &rid, const std::string &attributeName,
++                                  void *data) {
++    return -1;
++}
++
++RC RelationManager::scan(const std::string &tableName,
++                         const std::string &conditionAttribute,
++                         const CompOp compOp,
++                         const void *value,
++                         const std::vector<std::string> &attributeNames,
++                         RM_ScanIterator &rm_ScanIterator) {
++    return -1;
++}
++
++// Extra credit work
++RC RelationManager::dropAttribute(const std::string &tableName, const std::string &attributeName) {
++    return -1;
++}
++
++// Extra credit work
++RC RelationManager::addAttribute(const std::string &tableName, const Attribute &attr) {
++    return -1;
++}
++
++
++
+diff --git a/rm/rm.h b/rm/rm.h
+new file mode 100755
+index 0000000..a2d00db
+--- /dev/null
++++ b/rm/rm.h
+@@ -0,0 +1,77 @@
++#ifndef _rm_h_
++#define _rm_h_
++
++#include <string>
++#include <vector>
++
++#include "../rbf/rbfm.h"
++
++# define RM_EOF (-1)  // end of a scan operator
++
++// RM_ScanIterator is an iterator to go through tuples
++class RM_ScanIterator {
++public:
++    RM_ScanIterator() = default;
++
++    ~RM_ScanIterator() = default;
++
++    // "data" follows the same format as RelationManager::insertTuple()
++    RC getNextTuple(RID &rid, void *data) { return RM_EOF; };
++
++    RC close() { return -1; };
++};
++
++// Relation Manager
++class RelationManager {
++public:
++    static RelationManager &instance();
++
++    RC createCatalog();
++
++    RC deleteCatalog();
++
++    RC createTable(const std::string &tableName, const std::vector<Attribute> &attrs);
++
++    RC deleteTable(const std::string &tableName);
++
++    RC getAttributes(const std::string &tableName, std::vector<Attribute> &attrs);
++
++    RC insertTuple(const std::string &tableName, const void *data, RID &rid);
++
++    RC deleteTuple(const std::string &tableName, const RID &rid);
++
++    RC updateTuple(const std::string &tableName, const void *data, const RID &rid);
++
++    RC readTuple(const std::string &tableName, const RID &rid, void *data);
++
++    // Print a tuple that is passed to this utility method.
++    // The format is the same as printRecord().
++    RC printTuple(const std::vector<Attribute> &attrs, const void *data);
++
++    RC readAttribute(const std::string &tableName, const RID &rid, const std::string &attributeName, void *data);
++
++    // Scan returns an iterator to allow the caller to go through the results one by one.
++    // Do not store entire results in the scan iterator.
++    RC scan(const std::string &tableName,
++            const std::string &conditionAttribute,
++            const CompOp compOp,                  // comparison type such as "<" and "="
++            const void *value,                    // used in the comparison
++            const std::vector<std::string> &attributeNames, // a list of projected attributes
++            RM_ScanIterator &rm_ScanIterator);
++
++// Extra credit work (10 points)
++    RC addAttribute(const std::string &tableName, const Attribute &attr);
++
++    RC dropAttribute(const std::string &tableName, const std::string &attributeName);
++
++protected:
++    RelationManager();                                                  // Prevent construction
++    ~RelationManager();                                                 // Prevent unwanted destruction
++    RelationManager(const RelationManager &);                           // Prevent construction by copying
++    RelationManager &operator=(const RelationManager &);                // Prevent assignment
++
++private:
++    static RelationManager *_relation_manager;
++};
++
++#endif
+\ No newline at end of file
+diff --git a/rm/rm_test_util.h b/rm/rm_test_util.h
+new file mode 100644
+index 0000000..b59abd4
+--- /dev/null
++++ b/rm/rm_test_util.h
+@@ -0,0 +1,431 @@
++#ifndef _test_util_h_
++#define _test_util_h_
++
++#include <cstdio>
++#include <cstdlib>
++#include <fstream>
++#include <sstream>
++#include <iostream>
++#include <iomanip>
++#include <cassert>
++#include <ctime>
++#include <sys/resource.h>
++#include <set>
++#include "rm.h"
++#include "../rbf/test_util.h"
++
++RecordBasedFileManager &rbfm = RecordBasedFileManager::instance();
++
++RelationManager &rm = RelationManager::instance();
++
++// This code is required for testing to measure the memory usage of your code.
++// If you can't compile the codebase because of this function, you can safely comment this function or remove it.
++void memProfile() {
++    int who = RUSAGE_SELF;
++    struct rusage usage{};
++    getrusage(who, &usage);
++    std::cerr << usage.ru_maxrss << "KB" << std::endl;
++}
++
++// Function to prepare the data in the correct form to be inserted/read/updated
++void prepareTuple(int attributeCount, unsigned char *nullAttributesIndicator, const int nameLength,
++                  const std::string &name, const int age, const float height, const int salary, void *buffer,
++                  unsigned *tupleSize) {
++    unsigned offset = 0;
++
++    // Null-indicators
++    bool nullBit;
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attributeCount);
++
++    // Null-indicator for the fields
++    memcpy((char *) buffer + offset, nullAttributesIndicator, nullAttributesIndicatorActualSize);
++    offset += nullAttributesIndicatorActualSize;
++
++    // Beginning of the actual data
++    // Note that the left-most bit represents the first field. Thus, the offset is 7 from right, not 0.
++    // e.g., if a tuple consists of four attributes and they are all nulls, then the bit representation will be: [11110000]
++
++    // Is the name field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 7);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &nameLength, sizeof(int));
++        offset += sizeof(int);
++        memcpy((char *) buffer + offset, name.c_str(), nameLength);
++        offset += nameLength;
++    }
++
++    // Is the age field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 6);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &age, sizeof(int));
++        offset += sizeof(int);
++    }
++
++
++    // Is the height field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 5);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &height, sizeof(float));
++        offset += sizeof(float);
++    }
++
++
++    // Is the height field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 4);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &salary, sizeof(int));
++        offset += sizeof(int);
++    }
++
++    *tupleSize = offset;
++}
++
++// Function to get the data in the correct form to be inserted/read after adding the attribute ssn
++void prepareTupleAfterAdd(int attributeCount, unsigned char *nullAttributesIndicator, const int nameLength,
++                          const std::string &name, const int age, const float height, const int salary, const int ssn,
++                          void *buffer, unsigned *tupleSize) {
++    unsigned offset = 0;
++
++    // Null-indicators
++    bool nullBit;
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attributeCount);
++
++    // Null-indicator for the fields
++    memcpy((char *) buffer + offset, nullAttributesIndicator, nullAttributesIndicatorActualSize);
++    offset += nullAttributesIndicatorActualSize;
++
++    // Beginning of the actual data
++    // Note that the left-most bit represents the first field. Thus, the offset is 7 from right, not 0.
++    // e.g., if a tuple consists of four attributes and they are all nulls, then the bit representation will be: [11110000]
++
++    // Is the name field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 7);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &nameLength, sizeof(int));
++        offset += sizeof(int);
++        memcpy((char *) buffer + offset, name.c_str(), nameLength);
++        offset += nameLength;
++    }
++
++    // Is the age field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 6);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &age, sizeof(int));
++        offset += sizeof(int);
++    }
++
++    // Is the height field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 5);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &height, sizeof(float));
++        offset += sizeof(float);
++    }
++
++    // Is the salary field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 4);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &salary, sizeof(int));
++        offset += sizeof(int);
++    }
++
++    // Is the ssn field not-NULL?
++    nullBit = nullAttributesIndicator[0] & ((unsigned) 1 << (unsigned) 3);
++
++    if (!nullBit) {
++        memcpy((char *) buffer + offset, &ssn, sizeof(int));
++        offset += sizeof(int);
++    }
++
++    *tupleSize = offset;
++}
++
++// Function to get the data in the correct form to be inserted/read after adding
++// the attribute ssn
++void prepareTupleAfterAdd(const int nameLength, const std::string &name, const int age, const float height,
++                          const int salary, const int ssn, void *buffer, int *tupleSize) {
++    int offset = 0;
++
++    memcpy((char *) buffer + offset, &(nameLength), sizeof(int));
++    offset += sizeof(int);
++    memcpy((char *) buffer + offset, name.c_str(), nameLength);
++    offset += nameLength;
++
++    memcpy((char *) buffer + offset, &age, sizeof(int));
++    offset += sizeof(int);
++
++    memcpy((char *) buffer + offset, &height, sizeof(float));
++    offset += sizeof(float);
++
++    memcpy((char *) buffer + offset, &salary, sizeof(int));
++    offset += sizeof(int);
++
++    memcpy((char *) buffer + offset, &ssn, sizeof(int));
++    offset += sizeof(int);
++
++    *tupleSize = offset;
++}
++
++void printTupleAfterDrop(const void *buffer, const unsigned tupleSize) {
++    unsigned offset = 0;
++    std::cerr << "****Printing Buffer: Start****" << std::endl;
++
++    int nameLength = 0;
++    memcpy(&nameLength, (char *) buffer + offset, sizeof(int));
++    offset += sizeof(int);
++    std::cerr << "nameLength: " << nameLength << std::endl;
++
++    char *name = (char *) malloc(100);
++    memcpy(name, (char *) buffer + offset, nameLength);
++    name[nameLength] = '\0';
++    offset += nameLength;
++    std::cerr << "name: " << name << std::endl;
++
++    int age = 0;
++    memcpy(&age, (char *) buffer + offset, sizeof(int));
++    offset += sizeof(int);
++    std::cerr << "age: " << age << std::endl;
++
++    float height = 0.0;
++    memcpy(&height, (char *) buffer + offset, sizeof(float));
++    std::cerr << "height: " << height << std::endl;
++
++    std::cerr << "****Printing Buffer: End****" << std::endl << std::endl;
++}
++
++void printTupleAfterAdd(const void *buffer, const int tupleSize) {
++    int offset = 0;
++    std::cerr << "****Printing Buffer: Start****" << std::endl;
++
++    int nameLength = 0;
++    memcpy(&nameLength, (char *) buffer + offset, sizeof(int));
++    offset += sizeof(int);
++    std::cerr << "nameLength: " << nameLength << std::endl;
++
++    char *name = (char *) malloc(100);
++    memcpy(name, (char *) buffer + offset, nameLength);
++    name[nameLength] = '\0';
++    offset += nameLength;
++    std::cerr << "name: " << name << std::endl;
++
++    int age = 0;
++    memcpy(&age, (char *) buffer + offset, sizeof(int));
++    offset += sizeof(int);
++    std::cerr << "age: " << age << std::endl;
++
++    float height = 0;
++    memcpy(&height, (char *) buffer + offset, sizeof(float));
++    offset += sizeof(float);
++    std::cerr << "height: " << height << std::endl;
++
++    int salary = 0;
++    memcpy(&salary, (char *) buffer + offset, sizeof(int));
++    offset += sizeof(int);
++    std::cerr << "salary: " << salary << std::endl;
++
++    int ssn = 0;
++    memcpy(&ssn, (char *) buffer + offset, sizeof(int));
++    std::cerr << "SSN: " << ssn << std::endl;
++
++    std::cerr << "****Printing Buffer: End****" << std::endl << std::endl;
++}
++
++// Create an employee table
++RC createTable(const std::string &tableName) {
++    std::cerr << "****Create Table " << tableName << " ****" << std::endl;
++
++    // 1. Create Table ** -- made separate now.
++    std::vector<Attribute> attrs;
++
++    Attribute attr;
++    attr.name = "EmpName";
++    attr.type = TypeVarChar;
++    attr.length = (AttrLength) 30;
++    attrs.push_back(attr);
++
++    attr.name = "Age";
++    attr.type = TypeInt;
++    attr.length = (AttrLength) 4;
++    attrs.push_back(attr);
++
++    attr.name = "Height";
++    attr.type = TypeReal;
++    attr.length = (AttrLength) 4;
++    attrs.push_back(attr);
++
++    attr.name = "Salary";
++    attr.type = TypeInt;
++    attr.length = (AttrLength) 4;
++    attrs.push_back(attr);
++
++    RC rc = rm.createTable(tableName, attrs);
++    assert(rc == success);
++    std::cerr << "****Table Created: " << tableName << " ****" << std::endl << std::endl;
++
++    return success;
++}
++
++void prepareLargeTuple(int attributeCount, unsigned char *nullAttributesIndicator, const int index, void *buffer,
++                       int *size) {
++    int offset = 0;
++
++    // Null-indicators
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attributeCount);
++
++    // Null-indicator for the fields
++    memcpy((char *) buffer + offset, nullAttributesIndicator, nullAttributesIndicatorActualSize);
++    offset += nullAttributesIndicatorActualSize;
++
++    // compute the count
++    int count = index % 50 + 1;
++
++    // compute the letter
++    char text = (char) (index % 26 + 97);
++
++    for (unsigned i = 0; i < 10; i++) {
++        // length
++        memcpy((char *) buffer + offset, &count, sizeof(int));
++        offset += sizeof(int);
++
++        // varchar
++        for (int j = 0; j < count; j++) {
++            memcpy((char *) buffer + offset, &text, 1);
++            offset += 1;
++        }
++
++        // integer
++        memcpy((char *) buffer + offset, &index, sizeof(int));
++        offset += sizeof(int);
++
++        // real
++        auto real = (float) (index + 1);
++        memcpy((char *) buffer + offset, &real, sizeof(float));
++        offset += sizeof(float);
++    }
++    *size = offset;
++}
++
++// Create a large table for pressure test
++RC createLargeTable(const std::string &tableName) {
++    std::cerr << "***** Creating a Large Table: " << tableName << " *****" << std::endl;
++
++    // 1. Create Table ** -- made separate now.
++    std::vector<Attribute> attrs;
++
++    int index = 0;
++    char *suffix = (char *) malloc(10);
++    for (unsigned i = 0; i < 10; i++) {
++        Attribute attr;
++        sprintf(suffix, "%d", index);
++        attr.name = "attr";
++        attr.name += suffix;
++        attr.type = TypeVarChar;
++        attr.length = (AttrLength) 50;
++        attrs.push_back(attr);
++        index++;
++
++        sprintf(suffix, "%d", index);
++        attr.name = "attr";
++        attr.name += suffix;
++        attr.type = TypeInt;
++        attr.length = (AttrLength) 4;
++        attrs.push_back(attr);
++        index++;
++
++        sprintf(suffix, "%d", index);
++        attr.name = "attr";
++        attr.name += suffix;
++        attr.type = TypeReal;
++        attr.length = (AttrLength) 4;
++        attrs.push_back(attr);
++        index++;
++    }
++
++    RC rc = rm.createTable(tableName, attrs);
++    assert(rc == success);
++    std::cerr << "***** A Large Table: " << tableName << " has created. *****" << std::endl << std::endl;
++
++    free(suffix);
++
++    return 0;
++}
++
++// Write RIDs to a disk - do not use this code.
++// This is not a page-based operation. For test purpose only.
++void writeRIDsToDisk(std::vector<RID> &rids) {
++    remove("rids_file");
++    std::ofstream ridsFile("rids_file", std::ios::out | std::ios::trunc | std::ios::binary);
++
++    if (ridsFile.is_open()) {
++        ridsFile.seekp(0, std::ios::beg);
++        for (auto &rid : rids) {
++            ridsFile.write(reinterpret_cast<const char *>(&rid.pageNum),
++                           sizeof(unsigned));
++            ridsFile.write(reinterpret_cast<const char *>(&rid.slotNum),
++                           sizeof(unsigned));
++        }
++        ridsFile.close();
++    }
++}
++
++// Write sizes to a disk - do not use this code.
++// This is not a page-based operation. For test purpose only.
++void writeSizesToDisk(std::vector<int> &sizes) {
++    remove("sizes_file");
++    std::ofstream sizesFile("sizes_file", std::ios::out | std::ios::trunc | std::ios::binary);
++
++    if (sizesFile.is_open()) {
++        sizesFile.seekp(0, std::ios::beg);
++        for (int &size : sizes) {
++            sizesFile.write(reinterpret_cast<const char *>(&size),
++                            sizeof(int));
++        }
++        sizesFile.close();
++    }
++}
++
++// Read rids from the disk - do not use this code.
++// This is not a page-based operation. For test purpose only.
++void readRIDsFromDisk(std::vector<RID> &rids, int numRecords) {
++    RID tempRID;
++    unsigned pageNum;
++    unsigned slotNum;
++
++    std::ifstream ridsFile("rids_file", std::ios::in | std::ios::binary);
++    if (ridsFile.is_open()) {
++        ridsFile.seekg(0, std::ios::beg);
++        for (int i = 0; i < numRecords; i++) {
++            ridsFile.read(reinterpret_cast<char *>(&pageNum), sizeof(unsigned));
++            ridsFile.read(reinterpret_cast<char *>(&slotNum), sizeof(unsigned));
++            tempRID.pageNum = pageNum;
++            tempRID.slotNum = slotNum;
++            rids.push_back(tempRID);
++        }
++        ridsFile.close();
++    }
++}
++
++// Read sizes from the disk - do not use this code.
++// This is not a page-based operation. For test purpose only.
++void readSizesFromDisk(std::vector<int> &sizes, int numRecords) {
++    int size;
++
++    std::ifstream sizesFile("sizes_file", std::ios::in | std::ios::binary);
++    if (sizesFile.is_open()) {
++
++        sizesFile.seekg(0, std::ios::beg);
++        for (int i = 0; i < numRecords; i++) {
++            sizesFile.read(reinterpret_cast<char *>(&size), sizeof(int));
++            sizes.push_back(size);
++        }
++        sizesFile.close();
++    }
++}
++#endif
+diff --git a/rm/rmtest_00.cc b/rm/rmtest_00.cc
+new file mode 100644
+index 0000000..bebc5d1
+--- /dev/null
++++ b/rm/rmtest_00.cc
+@@ -0,0 +1,26 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_0(const std::string &tableName) {
++    // Functions Tested
++    // 1. getAttributes **
++    std::cout << std::endl << "***** In RM Test Case 0 *****" << std::endl;
++
++    // GetAttributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    for (unsigned i = 0; i < (unsigned) attrs.size(); i++) {
++        std::cout << (i + 1) << ". Attr Name: " << attrs[i].name << " Type: " << (AttrType) attrs[i].type << " Len: "
++                  << attrs[i].length << std::endl;
++    }
++
++    std::cout << std::endl << "***** RM Test Case 0 finished. The result will be examined. *****" << std::endl;
++
++    return success;
++}
++
++int main() {
++    // Get Attributes
++    return TEST_RM_0("tbl_employee");
++}
+diff --git a/rm/rmtest_01.cc b/rm/rmtest_01.cc
+new file mode 100644
+index 0000000..bde741e
+--- /dev/null
++++ b/rm/rmtest_01.cc
+@@ -0,0 +1,62 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_1(const std::string &tableName, const int nameLength, const std::string &name, const int age,
++             const float height, const int salary) {
++    // Functions tested
++    // 1. Insert Tuple **
++    // 2. Read Tuple **
++    // NOTE: "**" signifies the new functions being tested in this test case. 
++    std::cout << std::endl << "***** In RM Test Case 1 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    void *tuple = malloc(200);
++    void *returnedData = malloc(200);
++
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    // Initialize a NULL field indicator
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    // Insert a tuple into a table
++    prepareTuple(attrs.size(), nullsIndicator, nameLength, name, age, height, salary, tuple, &tupleSize);
++    std::cout << "The tuple to be inserted:" << std::endl;
++    rm.printTuple(attrs, tuple);
++    std::cout << std::endl;
++
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++    // Given the rid, read the tuple from table
++    rc = rm.readTuple(tableName, rid, returnedData);
++    assert(rc == success && "RelationManager::readTuple() should not fail.");
++
++    std::cout << "The returned tuple:" << std::endl;
++    rm.printTuple(attrs, returnedData);
++    std::cout << std::endl;
++
++    // Compare whether the two memory blocks are the same
++    if (memcmp(tuple, returnedData, tupleSize) == 0) {
++        std::cout << "**** RM Test Case 1 finished. The result will be examined. *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return success;
++    } else {
++        std::cout << "**** [FAIL] RM Test Case 1 failed *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return -1;
++    }
++
++}
++
++int main() {
++    // Insert/Read Tuple
++    return TEST_RM_1("tbl_employee", 14, "Peter Anteater", 27, 6.2, 10000);
++}
+diff --git a/rm/rmtest_02.cc b/rm/rmtest_02.cc
+new file mode 100644
+index 0000000..d781e0c
+--- /dev/null
++++ b/rm/rmtest_02.cc
+@@ -0,0 +1,61 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_2(const std::string &tableName, const int nameLength, const std::string &name, const int age,
++             const float height, const int salary) {
++    // Functions Tested
++    // 1. Insert tuple
++    // 2. Delete Tuple **
++    // 3. Read Tuple
++    std::cout << std::endl << "***** In RM Test Case 2 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    void *tuple = malloc(200);
++    void *returnedData = malloc(200);
++
++    // Test Insert the Tuple
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    prepareTuple(attrs.size(), nullsIndicator, nameLength, name, age, height, salary, tuple, &tupleSize);
++    std::cout << "The tuple to be inserted:" << std::endl;
++    rm.printTuple(attrs, tuple);
++    std::cout << std::endl;
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++    // Delete the tuple
++    rc = rm.deleteTuple(tableName, rid);
++    assert(rc == success && "RelationManager::deleteTuple() should not fail.");
++
++    // Read Tuple after deleting it - should fail
++    memset(returnedData, 0, 200);
++    rc = rm.readTuple(tableName, rid, returnedData);
++    assert(rc != success && "Reading a deleted tuple should fail.");
++
++    // Compare the two memory blocks to see whether they are different
++    if (memcmp(tuple, returnedData, tupleSize) != 0) {
++        std::cout << "***** RM Test Case 2 finished. The result will be examined. *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return success;
++    } else {
++        std::cout << "***** [FAIL] RM Test case 2 failed *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return -1;
++    }
++
++}
++
++int main() {
++    // Delete Tuple
++    return TEST_RM_2("tbl_employee", 5, "Peter", 23, 5.11, 12000);
++}
+diff --git a/rm/rmtest_03.cc b/rm/rmtest_03.cc
+new file mode 100644
+index 0000000..2daf93c
+--- /dev/null
++++ b/rm/rmtest_03.cc
+@@ -0,0 +1,75 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_3(const std::string &tableName, const int nameLength, const std::string &name, const int age,
++             const float height, const int salary) {
++    // Functions Tested
++    // 1. Insert Tuple    
++    // 2. Update Tuple **
++    // 3. Read Tuple
++    std::cout << std::endl << "***** In RM Test Case 3****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    unsigned updatedTupleSize = 0;
++    void *tuple = malloc(200);
++    void *updatedTuple = malloc(200);
++    void *returnedData = malloc(200);
++
++    // Test Insert the Tuple
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    prepareTuple(attrs.size(), nullsIndicator, nameLength, name, age, height, salary, tuple, &tupleSize);
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc == success && "RelationManager::insertTuple() should not fail.");
++    std::cout << "Original RID:  " << rid.pageNum << " " << rid.slotNum << std::endl;
++
++    // Test Update Tuple
++    prepareTuple(attrs.size(), nullsIndicator, 7, "Barbara", age, height, 12000, updatedTuple, &updatedTupleSize);
++    rc = rm.updateTuple(tableName, updatedTuple, rid);
++    assert(rc == success && "RelationManager::updateTuple() should not fail.");
++
++    // Test Read Tuple 
++    rc = rm.readTuple(tableName, rid, returnedData);
++    assert(rc == success && "RelationManager::readTuple() should not fail.");
++
++    // Print the tuples 
++    std::cout << "Inserted Data:" << std::endl;
++    rm.printTuple(attrs, tuple);
++    std::cout << std::endl;
++
++    std::cout << "Updated data:" << std::endl;
++    rm.printTuple(attrs, updatedTuple);
++    std::cout << std::endl;
++
++    std::cout << "Returned Data:" << std::endl;
++    rm.printTuple(attrs, returnedData);
++    std::cout << std::endl;
++
++    if (memcmp(updatedTuple, returnedData, updatedTupleSize) == 0) {
++        std::cout << "***** RM Test Case 3 Finished. The result will be examined. *****" << std::endl << std::endl;
++        free(tuple);
++        free(updatedTuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return 0;
++    } else {
++        std::cout << "***** [FAIL] RM Test case 3 Failed *****" << std::endl << std::endl;
++        free(tuple);
++        free(updatedTuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return -1;
++    }
++
++}
++
++int main() {
++    // Update Tuple
++    return TEST_RM_3("tbl_employee", 4, "Paul", 28, 6.5, 6000);
++}
+diff --git a/rm/rmtest_04.cc b/rm/rmtest_04.cc
+new file mode 100644
+index 0000000..ca40560
+--- /dev/null
++++ b/rm/rmtest_04.cc
+@@ -0,0 +1,55 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_4(const std::string &tableName, const int nameLength, const std::string &name, const int age,
++             const float height, const int salary) {
++    // Functions Tested
++    // 1. Insert tuple
++    // 2. Read Attributes **
++    std::cout << std::endl << "***** In RM Test Case 4 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    void *tuple = malloc(200);
++    void *returnedData = malloc(200);
++
++    // Test Insert the Tuple
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    prepareTuple(attrs.size(), nullsIndicator, nameLength, name, age, height, salary, tuple, &tupleSize);
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++    // Test Read Attribute
++    rc = rm.readAttribute(tableName, rid, "Salary", returnedData);
++    assert(rc == success && "RelationManager::readAttribute() should not fail.");
++
++    int salaryBack = *(int *) ((char *) returnedData + nullAttributesIndicatorActualSize);
++
++    std::cout << "Salary: " << salary << " Returned Salary: " << salaryBack << std::endl;
++    if (memcmp((char *) returnedData + nullAttributesIndicatorActualSize,
++               (char *) tuple + 19 + nullAttributesIndicatorActualSize, 4) == 0) {
++        std::cout << "***** RM Test case 4 Finished. The result will be examined. *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return success;
++    } else {
++        std::cout << "***** [FAIL] RM Test Case 4 Failed. *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return -1;
++    }
++
++}
++
++int main() {
++    // Read Attributes
++    return TEST_RM_4("tbl_employee", 7, "Hoffman", 31, 5.8, 9999);
++}
+diff --git a/rm/rmtest_05.cc b/rm/rmtest_05.cc
+new file mode 100644
+index 0000000..aca8f7b
+--- /dev/null
++++ b/rm/rmtest_05.cc
+@@ -0,0 +1,69 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_5(const string &tableName, const int nameLength, const string &name, const int age, const float height,
++             const int salary) {
++    // Functions Tested
++    // 0. Insert tuple;
++    // 1. Read Tuple
++    // 2. Delete Table **
++    // 3. Read Tuple
++    // 4. Insert Tuple
++    std::cout << std::endl << "***** In RM Test Case 5 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    void *tuple = malloc(200);
++    void *returnedData = malloc(200);
++    void *returnedData1 = malloc(200);
++
++    // Test Insert Tuple
++    vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    prepareTuple(attrs.size(), nullsIndicator, nameLength, name, age, height, salary, tuple, &tupleSize);
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++    // Test Read Tuple 
++    rc = rm.readTuple(tableName, rid, returnedData);
++    assert(rc == success && "RelationManager::readTuple() should not fail.");
++
++    // Test Delete Table
++    rc = rm.deleteTable(tableName);
++    assert(rc == success && "RelationManager::deleteTable() should not fail.");
++
++    // Reading a tuple on a deleted table
++    memset((char *) returnedData1, 0, 200);
++    rc = rm.readTuple(tableName, rid, returnedData1);
++    assert(rc != success && "RelationManager::readTuple() on a deleted table should fail.");
++
++    // Inserting a tuple on a deleted table
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc != success && "RelationManager::insertTuple() on a deleted table should fail.");
++
++    if (memcmp(returnedData, returnedData1, tupleSize) != 0) {
++        std::cout << "***** Test Case 5 Finished. The result will be examined. *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(returnedData1);
++        free(nullsIndicator);
++        return success;
++    } else {
++        std::cout << "***** [FAIL] Test Case 5 Failed *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(returnedData1);
++        free(nullsIndicator);
++        return -1;
++    }
++}
++
++int main() {
++    // Delete Table
++    return TEST_RM_5("tbl_employee", 6, "Martin", 29, 193.6, 20000);
++}
+diff --git a/rm/rmtest_06.cc b/rm/rmtest_06.cc
+new file mode 100644
+index 0000000..3073e2e
+--- /dev/null
++++ b/rm/rmtest_06.cc
+@@ -0,0 +1,69 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_6(const std::string &tableName) {
++    // Functions Tested
++    // 1. Simple scan **
++    std::cout << std::endl << "***** In RM Test Case 6 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    int numTuples = 100;
++    void *tuple;
++    void *returnedData = malloc(200);
++
++    // Test Insert Tuple
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    RID rids[numTuples];
++    std::set<int> ages;
++    for (int i = 0; i < numTuples; i++) {
++        tuple = malloc(200);
++
++        // Insert Tuple
++        float height = (float) i;
++        int age = 20 + i;
++        prepareTuple(attrs.size(), nullsIndicator, 6, "Tester", age, height, age * 10, tuple, &tupleSize);
++        ages.insert(age);
++        rc = rm.insertTuple(tableName, tuple, rid);
++        assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++        rids[i] = rid;
++        free(tuple);
++    }
++
++    // Set up the iterator
++    RM_ScanIterator rmsi;
++    std::string attr = "Age";
++    std::vector<std::string> attributes;
++    attributes.push_back(attr);
++    rc = rm.scan(tableName, "", NO_OP, NULL, attributes, rmsi);
++    assert(rc == success && "RelationManager::scan() should not fail.");
++
++    nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attributes.size());
++    while (rmsi.getNextTuple(rid, returnedData) != RM_EOF) {
++        if (ages.find(*(int *) ((char *) returnedData + nullAttributesIndicatorActualSize)) == ages.end()) {
++            std::cout << "***** [FAIL] Test Case 6 Failed *****" << std::endl << std::endl;
++            rmsi.close();
++            free(returnedData);
++            free(nullsIndicator);
++            return -1;
++        }
++    }
++    rmsi.close();
++
++    free(returnedData);
++    free(nullsIndicator);
++    std::cout << "***** Test Case 6 Finished. The result will be examined. *****" << std::endl << std::endl;
++    return 0;
++}
++
++int main() {
++    // Simple Scan
++    return TEST_RM_6("tbl_employee3");
++}
+diff --git a/rm/rmtest_07.cc b/rm/rmtest_07.cc
+new file mode 100644
+index 0000000..9606a40
+--- /dev/null
++++ b/rm/rmtest_07.cc
+@@ -0,0 +1,53 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_7(const string &tableName) {
++    // Functions Tested
++    // 1. Simple scan **
++    // 2. Delete the given table
++    std::cout << std::endl << "***** In RM Test Case 7 *****" << std::endl;
++
++    RID rid;
++    int numTuples = 100;
++    void *returnedData = malloc(200);
++
++    std::set<int> ages;
++    RC rc = 0;
++    for (int i = 0; i < numTuples; i++) {
++        int age = 20 + i;
++        ages.insert(age);
++    }
++
++    // Set up the iterator
++    RM_ScanIterator rmsi;
++    std::string attr = "Age";
++    std::vector<std::string> attributes;
++    attributes.push_back(attr);
++    rc = rm.scan(tableName, "", NO_OP, NULL, attributes, rmsi);
++    assert(rc == success && "RelationManager::scan() should not fail.");
++    int ageReturned = 0;
++
++    while (rmsi.getNextTuple(rid, returnedData) != RM_EOF) {
++        //std::cout << "Returned Age: " << *(int *)((char *)returnedData+1) <<std::endl;
++        ageReturned = *(int *) ((char *) returnedData + 1);
++        if (ages.find(ageReturned) == ages.end()) {
++            std::cout << "***** [FAIL] Test Case 7 Failed *****" << std::endl << std::endl;
++            rmsi.close();
++            free(returnedData);
++            return -1;
++        }
++    }
++    rmsi.close();
++
++    // Delete a Table
++    rc = rm.deleteTable(tableName);
++    assert(rc == success && "RelationManager::deleteTable() should not fail.");
++
++    free(returnedData);
++    std::cout << "***** Test Case 7 Finished. The result will be examined. *****" << std::endl << std::endl;
++    return success;
++}
++
++int main() {
++    // Simple Scan
++    return TEST_RM_7("tbl_employee3");
++}
+diff --git a/rm/rmtest_08.cc b/rm/rmtest_08.cc
+new file mode 100644
+index 0000000..99499d2
+--- /dev/null
++++ b/rm/rmtest_08.cc
+@@ -0,0 +1,53 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_8(const std::string &tableName, std::vector<RID> &rids, std::vector<int> &sizes) {
++    // Functions Tested for large tables:
++    // 1. getAttributes
++    // 2. insert tuple
++    std::cout << std::endl << "***** In RM Test Case 8 *****" << std::endl;
++
++    RID rid;
++    void *tuple = malloc(4000);
++    int numTuples = 2000;
++
++    // GetAttributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    // Insert 2000 tuples into table
++    for (int i = 0; i < numTuples; i++) {
++        // Test insert Tuple
++        int size = 0;
++        memset(tuple, 0, 2000);
++        prepareLargeTuple(attrs.size(), nullsIndicator, i, tuple, &size);
++
++        rc = rm.insertTuple(tableName, tuple, rid);
++        assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++        rids.push_back(rid);
++        sizes.push_back(size);
++    }
++
++    free(tuple);
++    free(nullsIndicator);
++
++    writeRIDsToDisk(rids);
++    writeSizesToDisk(sizes);
++
++    std::cout << "***** Test Case 8 Finished. The result will be examined. *****" << std::endl << std::endl;
++
++    return success;
++}
++
++int main() {
++    std::vector<RID> rids;
++    std::vector<int> sizes;
++
++    // Insert Tuple
++    return TEST_RM_8("tbl_employee4", rids, sizes);
++}
+diff --git a/rm/rmtest_09.cc b/rm/rmtest_09.cc
+new file mode 100644
+index 0000000..a1ee1c4
+--- /dev/null
++++ b/rm/rmtest_09.cc
+@@ -0,0 +1,58 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_09(const std::string &tableName, std::vector<RID> &rids, std::vector<int> &sizes) {
++    // Functions Tested for large tables:
++    // 1. read tuple
++    std::cout << "***** In RM Test case 9 *****" << std::endl;
++
++    int size = 0;
++    int numTuples = 2000;
++    void *tuple = malloc(4000);
++    void *returnedData = malloc(4000);
++
++    // read the saved rids and the sizes of records
++    readRIDsFromDisk(rids, numTuples);
++    readSizesFromDisk(sizes, numTuples);
++
++    // GetAttributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    for (int i = 0; i < numTuples; i++) {
++        memset(tuple, 0, 4000);
++        memset(returnedData, 0, 4000);
++        rc = rm.readTuple(tableName, rids[i], returnedData);
++        assert(rc == success && "RelationManager::readTuple() should not fail.");
++
++        size = 0;
++        prepareLargeTuple(attrs.size(), nullsIndicator, i, tuple, &size);
++        if (memcmp(returnedData, tuple, sizes[i]) != 0) {
++            std::cout << "***** [FAIL] Test Case 9 Failed *****" << std::endl << std::endl;
++            free(tuple);
++            free(returnedData);
++            free(nullsIndicator);
++            return -1;
++        }
++    }
++
++    free(tuple);
++    free(returnedData);
++    free(nullsIndicator);
++
++    std::cout << "***** Test Case 9 Finished. The result will be examined. *****" << std::endl << std::endl;
++
++    return success;
++}
++
++int main() {
++    std::vector<RID> rids;
++    std::vector<int> sizes;
++
++    // Read Tuple
++    return TEST_RM_09("tbl_employee4", rids, sizes);
++}
+diff --git a/rm/rmtest_10.cc b/rm/rmtest_10.cc
+new file mode 100644
+index 0000000..0d35a01
+--- /dev/null
++++ b/rm/rmtest_10.cc
+@@ -0,0 +1,72 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_10(const std::string &tableName, std::vector<RID> &rids, std::vector<int> &sizes) {
++    // Functions Tested for large tables:
++    // 1. update tuple
++    // 2. read tuple
++    std::cout << std::endl << "***** In RM Test case 10 *****" << std::endl;
++
++    int numTuples = 2000;
++    void *tuple = malloc(4000);
++    void *returnedData = malloc(4000);
++
++    readRIDsFromDisk(rids, numTuples);
++    readSizesFromDisk(sizes, numTuples);
++
++    // GetAttributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    // Update the first 1000 tuples
++    int size = 0;
++    for (int i = 0; i < 1000; i++) {
++        memset(tuple, 0, 4000);
++        RID rid = rids[i];
++
++        prepareLargeTuple(attrs.size(), nullsIndicator, i + 10, tuple, &size);
++        rc = rm.updateTuple(tableName, tuple, rid);
++        assert(rc == success && "RelationManager::updateTuple() should not fail.");
++
++        sizes[i] = size;
++        rids[i] = rid;
++    }
++
++    // Read the updated records and check the integrity
++    for (int i = 0; i < 1000; i++) {
++        memset(tuple, 0, 4000);
++        memset(returnedData, 0, 4000);
++        prepareLargeTuple(attrs.size(), nullsIndicator, i + 10, tuple, &size);
++        rc = rm.readTuple(tableName, rids[i], returnedData);
++        assert(rc == success && "RelationManager::readTuple() should not fail.");
++
++        if (memcmp(returnedData, tuple, sizes[i]) != 0) {
++            std::cout << "***** [FAIL] Test Case 10 Failed *****" << std::endl << std::endl;
++            free(tuple);
++            free(returnedData);
++            free(nullsIndicator);
++            return -1;
++        }
++    }
++
++    free(tuple);
++    free(returnedData);
++    free(nullsIndicator);
++
++    std::cout << "***** Test Case 10 Finished. The result will be examined. *****" << std::endl << std::endl;
++
++    return success;
++
++}
++
++int main() {
++    std::vector<RID> rids;
++    std::vector<int> sizes;
++
++    // Update Tuple
++    return TEST_RM_10("tbl_employee4", rids, sizes);
++}
+diff --git a/rm/rmtest_11.cc b/rm/rmtest_11.cc
+new file mode 100644
+index 0000000..798b38c
+--- /dev/null
++++ b/rm/rmtest_11.cc
+@@ -0,0 +1,44 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_11(const std::string &tableName, std::vector<RID> &rids) {
++    // Functions Tested for large tables:
++    // 1. delete tuple
++    // 2. read tuple
++    std::cout << std::endl << "***** In RM Test Case 11 *****" << std::endl;
++
++    int numTuples = 2000;
++    RC rc = 0;
++    void *returnedData = malloc(4000);
++
++    readRIDsFromDisk(rids, numTuples);
++
++    // Delete the first 1000 tuples
++    for (int i = 0; i < 1000; i++) {
++        rc = rm.deleteTuple(tableName, rids[i]);
++        assert(rc == success && "RelationManager::deleteTuple() should not fail.");
++    }
++
++    // Try to read the first 1000 deleted tuples
++    for (int i = 0; i < 1000; i++) {
++        rc = rm.readTuple(tableName, rids[i], returnedData);
++        assert(rc != success && "RelationManager::readTuple() on a deleted tuple should fail.");
++    }
++
++    for (int i = 1000; i < 2000; i++) {
++        rc = rm.readTuple(tableName, rids[i], returnedData);
++        assert(rc == success && "RelationManager::readTuple() should not fail.");
++    }
++    std::cout << "***** Test Case 11 Finished. The result will be examined. *****" << std::endl << std::endl;
++
++    free(returnedData);
++
++    return success;
++}
++
++int main() {
++    std::vector<RID> rids;
++    std::vector<int> sizes;
++
++    // Delete Tuple
++    return TEST_RM_11("tbl_employee4", rids);
++}
+diff --git a/rm/rmtest_12.cc b/rm/rmtest_12.cc
+new file mode 100644
+index 0000000..879c3b9
+--- /dev/null
++++ b/rm/rmtest_12.cc
+@@ -0,0 +1,70 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_12(const std::string &tableName)
++{
++    // Functions Tested for large tables
++    // 1. scan
++   std::cout <<std::endl << "***** In RM Test case 12 *****" <<std::endl;
++
++    RM_ScanIterator rmsi;
++    std::vector<std::string> attrs;
++    attrs.emplace_back("attr5");
++    attrs.emplace_back("attr12");
++    attrs.emplace_back("attr28");
++   
++    RC rc = rm.scan(tableName, "", NO_OP, NULL, attrs, rmsi);
++    assert(rc == success && "RelationManager::scan() should not fail.");
++
++    RID rid;
++    int j = 0;
++    void *returnedData = malloc(4000);
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++
++    while(rmsi.getNextTuple(rid, returnedData) != RM_EOF)
++    {
++        if(j % 200 == 0)
++        {
++            int offset = 0;
++
++           std::cout << "Real Value: " << *(float *)((char *)returnedData+nullAttributesIndicatorActualSize) <<std::endl;
++            offset += 4;
++        
++            int size = *(int *)((char *)returnedData + offset + nullAttributesIndicatorActualSize);
++           std::cout << "Varchar size: " << size <<std::endl;
++            offset += 4;
++
++            char *buffer = (char *)malloc(size + 1);
++            memcpy(buffer, (char *)returnedData + offset + nullAttributesIndicatorActualSize, size);
++            buffer[size] = 0;
++            offset += size;
++    
++           std::cout << "VarChar Value: " << buffer <<std::endl;
++
++           std::cout << "Integer Value: " << *(int *)((char *)returnedData + offset + nullAttributesIndicatorActualSize) <<std::endl <<std::endl;
++            offset += 4;
++
++            free(buffer);
++        }
++        j++;
++        memset(returnedData, 0, 4000);
++    }
++    rmsi.close();
++   std::cout << "Total number of tuples: " << j <<std::endl <<std::endl;
++    if (j > 1000) {
++       std::cout << "***** [FAIL] Test Case 12 Failed *****" <<std::endl <<std::endl;
++        free(returnedData);
++        return -1;
++    }
++
++   std::cout << "***** Test Case 12 Finished. The result will be examined. *****" <<std::endl <<std::endl;
++    free(returnedData);
++
++    return success;
++}
++
++int main()
++{
++	// Scan
++    return TEST_RM_12("tbl_employee4");
++}
+diff --git a/rm/rmtest_13.cc b/rm/rmtest_13.cc
+new file mode 100644
+index 0000000..89bf668
+--- /dev/null
++++ b/rm/rmtest_13.cc
+@@ -0,0 +1,78 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_13(const std::string &tableName) {
++    // Functions Tested:
++    // 1. Conditional scan
++    std::cout << std::endl << "***** In RM Test Case 13 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    int numTuples = 500;
++    void *tuple;
++    void *returnedData = malloc(200);
++    int ageVal = 25;
++    int age = 0;
++
++    RID rids[numTuples];
++    std::vector<char *> tuples;
++
++    // GetAttributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    for (int i = 0; i < numTuples; i++) {
++        tuple = malloc(100);
++
++        // Insert Tuple
++        auto height = (float) i;
++
++        age = (rand() % 10) + 23;
++
++        prepareTuple(attrs.size(), nullsIndicator, 6, "Tester", age, height, 123, tuple, &tupleSize);
++        rc = rm.insertTuple(tableName, tuple, rid);
++        assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++        rids[i] = rid;
++        free(tuple);
++    }
++
++    // Set up the iterator
++    RM_ScanIterator rmsi;
++    std::string attr = "Age";
++    std::vector<std::string> attributes;
++    attributes.push_back(attr);
++    rc = rm.scan(tableName, attr, GT_OP, &ageVal, attributes, rmsi);
++    assert(rc == success && "RelationManager::scan() should not fail.");
++
++    while (rmsi.getNextTuple(rid, returnedData) != RM_EOF) {
++        age = *(int *) ((char *) returnedData + 1);
++        if (age <= ageVal) {
++            std::cout << "Returned value from a scan is not correct." << std::endl;
++            std::cout << "***** [FAIL] Test Case 13 Failed *****" << std::endl << std::endl;
++            rmsi.close();
++            free(returnedData);
++            free(nullsIndicator);
++            return -1;
++        }
++    }
++    rmsi.close();
++    free(returnedData);
++    free(nullsIndicator);
++
++    rc = rm.deleteTable("tbl_b_employee4");
++
++    std::cout << "***** Test Case 13 Finished. The result will be examined. *****" << std::endl << std::endl;
++
++    return success;
++}
++
++int main() {
++    // Scan with conditions
++    createTable("tbl_b_employee4");
++    return TEST_RM_13("tbl_b_employee4");
++}
+diff --git a/rm/rmtest_13b.cc b/rm/rmtest_13b.cc
+new file mode 100644
+index 0000000..3a558cf
+--- /dev/null
++++ b/rm/rmtest_13b.cc
+@@ -0,0 +1,122 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_13b(const std::string &tableName) {
++    // Functions Tested:
++    // 1. Conditional scan - including NULL values
++    std::cout << std::endl << "***** In RM Test Case 13B *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    int numTuples = 500;
++    void *tuple;
++    void *returnedData = malloc(200);
++    int ageVal = 25;
++    int age = 0;
++
++    RID rids[numTuples];
++    std::vector<char *> tuples;
++    std::string tupleName;
++    char *suffix = (char *) malloc(10);
++
++    bool nullBit = false;
++
++    // GetAttributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    auto *nullsIndicatorWithNull = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicatorWithNull, 0, nullAttributesIndicatorActualSize);
++
++    // age field : NULL
++    nullsIndicatorWithNull[0] = 64; // 01000000
++
++    for (int i = 0; i < numTuples; i++) {
++        tuple = malloc(100);
++
++        // Insert Tuple
++        auto height = (float) i;
++
++        age = (rand() % 20) + 15;
++
++        sprintf(suffix, "%d", i);
++
++        if (i % 10 == 0) {
++            tupleName = "TesterNull";
++            tupleName += suffix;
++            prepareTuple(attrs.size(), nullsIndicatorWithNull, tupleName.length(), tupleName, 0, height, 456, tuple,
++                         &tupleSize);
++        } else {
++            tupleName = "Tester";
++            tupleName += suffix;
++            prepareTuple(attrs.size(), nullsIndicator, tupleName.length(), tupleName, age, height, 123, tuple,
++                         &tupleSize);
++        }
++        rc = rm.insertTuple(tableName, tuple, rid);
++        assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++        rids[i] = rid;
++        free(tuple);
++    }
++
++    // Set up the iterator
++    RM_ScanIterator rmsi;
++    std::string attr = "Age";
++    std::vector<std::string> attributes;
++    attributes.push_back(attr);
++    rc = rm.scan(tableName, attr, GT_OP, &ageVal, attributes, rmsi);
++    assert(rc == success && "RelationManager::scan() should not fail.");
++
++    while (rmsi.getNextTuple(rid, returnedData) != RM_EOF) {
++        // Check the first bit of the returned data since we only return one attribute in this test case
++        // However, the age with NULL should not be returned since the condition NULL > 25 can't hold.
++        // All comparison operations with NULL should return FALSE
++        // (e.g., NULL > 25, NULL >= 25, NULL <= 25, NULL < 25, NULL == 25, NULL != 25: ALL FALSE)
++        nullBit = *(unsigned char *) ((char *) returnedData) & ((unsigned) 1 << (unsigned) 7);
++        if (!nullBit) {
++            age = *(int *) ((char *) returnedData + 1);
++            if (age <= ageVal) {
++                // Comparison didn't work in this case
++                std::cout << "Returned value from a scan is not correct: returned Age <= 25." << std::endl;
++                std::cout << "***** [FAIL] Test Case 13B Failed *****" << std::endl << std::endl;
++                rmsi.close();
++                free(returnedData);
++                free(suffix);
++                free(nullsIndicator);
++                free(nullsIndicatorWithNull);
++                return -1;
++            }
++        } else {
++            // Age with NULL value should not be returned.
++            std::cout << "Returned value from a scan is not correct. NULL returned." << std::endl;
++            std::cout << "***** [FAIL] Test Case 13B Failed *****" << std::endl << std::endl;
++            rmsi.close();
++            free(returnedData);
++            free(suffix);
++            free(nullsIndicator);
++            free(nullsIndicatorWithNull);
++            return -1;
++        }
++    }
++    rmsi.close();
++    free(returnedData);
++    free(suffix);
++    free(nullsIndicator);
++    free(nullsIndicatorWithNull);
++
++    rc = rm.deleteTable("tbl_b_employee5");
++
++    std::cout << "Test Case 13B Finished. The result will be examined. *****" << std::endl << std::endl;
++
++    return success;
++}
++
++int main() {
++    // Scan with conditions
++    createTable("tbl_b_employee5");
++    return TEST_RM_13b("tbl_b_employee5");
++}
+diff --git a/rm/rmtest_14.cc b/rm/rmtest_14.cc
+new file mode 100644
+index 0000000..b60b5f6
+--- /dev/null
++++ b/rm/rmtest_14.cc
+@@ -0,0 +1,69 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_14(const std::string &tableName) {
++    // Functions Tested:
++    // 1. System Catalog Implementation - Tables table
++    std::cout << std::endl << "***** In RM Test Case 14 *****" << std::endl;
++
++    // Get Catalog Attributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    // There should be at least three attributes: table-id, table-name, file-name
++    if (attrs.size() < 3) {
++        std::cout << "Your system catalog schema is not correct." << std::endl;
++        std::cout << "***** [FAIL] Test Case 14 failed *****" << std::endl;
++        return -1;
++    } else if (attrs[0].name != "table-id" || attrs[1].name != "table-name" || attrs[2].name != "file-name") {
++        std::cout << "Your system catalog schema is not correct." << std::endl;
++        std::cout << "***** [FAIL] Test Case 14 failed *****" << std::endl;
++        return -1;
++    }
++
++    RID rid;
++    void *returnedData = malloc(1000);
++
++    // Set up the iterator
++    RM_ScanIterator rmsi;
++    std::vector<std::string> projected_attrs;
++    projected_attrs.reserve(attrs.size());
++    for (Attribute &attr : attrs) {
++        projected_attrs.push_back(attr.name);
++    }
++
++    rc = rm.scan(tableName, "", NO_OP, NULL, projected_attrs, rmsi);
++    assert(rc == success && "RelationManager::scan() should not fail.");
++
++    int count = 0;
++    while (rmsi.getNextTuple(rid, returnedData) != RM_EOF) {
++        // We will manually check the returned tuples to see whether your implementation is correct or not.
++        rm.printTuple(attrs, returnedData);
++        count++;
++    }
++    rmsi.close();
++
++    // There should be at least two rows - one for Tables and one for Columns
++    if (count < 2) {
++        std::cout << "Your system catalog schema is not correct." << std::endl;
++        std::cout << "***** [FAIL] Test Case 14 failed" << std::endl;
++        free(returnedData);
++        return -1;
++    }
++
++    // Deleting the catalog should fail.
++    rc = rm.deleteTable(tableName);
++    assert(rc != success && "RelationManager::deleteTable() on the system catalog table should fail.");
++
++    free(returnedData);
++    std::cout << "***** Test Case 14 Finished. The result will be examined. *****" << endl;
++    return 0;
++}
++
++int main() {
++    // NOTE: your Tables table must be called "Tables"
++    std::string catalog_table_name = "Tables";
++
++    // Test Catalog Information
++    return TEST_RM_14(catalog_table_name);
++}
+diff --git a/rm/rmtest_15.cc b/rm/rmtest_15.cc
+new file mode 100644
+index 0000000..d435147
+--- /dev/null
++++ b/rm/rmtest_15.cc
+@@ -0,0 +1,72 @@
++#include "rm_test_util.h"
++
++RC TEST_RM_15(const std::string &tableName)
++{
++    // Functions Tested:
++    // 1. System Catalog Implementation - Columns table
++    std::cout <<std::endl << "***** In RM Test Case 15 *****" <<std::endl;
++
++    // Get Catalog Attributes
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    // There should be at least five attributes: table-id, column-name, column-type, column-length, column-position
++    if (attrs.size() < 5) {
++        std::cout << "Your system catalog schema is not correct." <<std::endl;
++       std::cout << "***** [FAIL] Test Case 15 failed *****" <<std::endl;
++        return -1;
++    } else if (attrs[0].name != "table-id" || attrs[1].name != "column-name" ||
++    		   attrs[2].name != "column-type" || attrs[3].name != "column-length" || attrs[4].name != "column-position") {
++        std::cout << "Your system catalog schema is not correct." <<std::endl;
++       std::cout << "***** [FAIL] Test Case 15 failed *****" <<std::endl;
++        return -1;
++    }
++
++    RID rid;
++    void *returnedData = malloc(200);
++
++    // Set up the iterator
++    RM_ScanIterator rmsi;
++    std::vector<std::string> projected_attrs;
++    for (Attribute & attr : attrs){
++      projected_attrs.push_back(attr.name);
++    }
++
++    rc = rm.scan(tableName, "", NO_OP, NULL, projected_attrs, rmsi);
++    assert(rc == success && "RelationManager::scan() should not fail.");
++
++    int count = 0;
++    while(rmsi.getNextTuple(rid, returnedData) != RM_EOF)
++    {
++    	// We will manually check the returned tuples to see whether your implementation is correct or not.
++        rm.printTuple(attrs, returnedData);
++        count++;
++    }
++    rmsi.close();
++
++    // There should be at least eight rows - three for Tables and five for Columns
++    if (count < 8) {
++        std::cout << "Your system catalog schema is not correct." <<std::endl;
++       std::cout << "***** [FAIL] Test Case 15 failed" <<std::endl;
++        free(returnedData);
++        return -1;
++    }
++
++    // Deleting the catalog should fail.
++    rc = rm.deleteTable(tableName);
++    assert(rc != success && "RelationManager::deleteTable() on the system catalog table should fail.");
++
++    free(returnedData);
++   std::cout << "***** Test Case 15 Finished. The result will be examined. *****" <<std::endl;
++    return 0;
++}
++
++int main()
++{
++    // NOTE: your Columns table must be called "Columns"
++    std::string catalog_table_name = "Columns";
++
++    // Test Catalog Information
++    return TEST_RM_15(catalog_table_name);
++}
+diff --git a/rm/rmtest_create_tables.cc b/rm/rmtest_create_tables.cc
+new file mode 100644
+index 0000000..1eecdcd
+--- /dev/null
++++ b/rm/rmtest_create_tables.cc
+@@ -0,0 +1,41 @@
++#include "rm_test_util.h"
++
++int main() {
++    // By executing this script, the following tables including the system tables will be removed and constructed again.
++
++    // Before executing rmtest_xx, you need to make sure that this script work properly.
++    std::cout << std::endl << "***** RM TEST - Creating the Catalog and user tables *****" << std::endl;
++
++    // Try to delete the System Catalog.
++    // If this is the first time, it will generate an error. It's OK and we will ignore that.
++    RC rc = rm.deleteCatalog();
++
++    rc = rm.createCatalog();
++    assert (rc == success && "Creating the Catalog should not fail.");
++
++    // Delete the actual file and create Table tbl_employee
++    remove("tbl_employee");
++
++    rc = createTable("tbl_employee");
++    assert (rc == success && "Creating a table should not fail.");
++
++    // Delete the actual file and create Table tbl_employee
++    remove("tbl_employee2");
++
++    rc = createTable("tbl_employee2");
++    assert (rc == success && "Creating a table should not fail.");
++
++    // Delete the actual file and create Table tbl_employee
++    remove("tbl_employee3");
++
++    rc = createTable("tbl_employee3");
++    assert (rc == success && "Creating a table should not fail.");
++
++    // Delete the actual file and create Table tbl_employee
++    remove("tbl_employee4");
++
++    rc = createLargeTable("tbl_employee4");
++    assert (rc == success && "Creating a table should not fail.");
++
++    return success;
++}
+diff --git a/rm/rmtest_delete_tables.cc b/rm/rmtest_delete_tables.cc
+new file mode 100644
+index 0000000..a2fb2b5
+--- /dev/null
++++ b/rm/rmtest_delete_tables.cc
+@@ -0,0 +1,35 @@
++#include "rm_test_util.h"
++
++int main() {
++
++    // By executing this script, the following tables including the system tables will be removed.
++    std::cout << std::endl << "***** RM TEST - Deleting the Catalog and User tables *****" << std::endl;
++
++    RC rc = rm.deleteTable("tbl_employee");
++    if (rc != 0) {
++        std::cout << "Deleting tbl_employee failed." << std::endl;
++    }
++
++    rc = rm.deleteTable("tbl_employee2");
++    if (rc != 0) {
++        std::cout << "Deleting tbl_employee2 failed." << std::endl;
++    }
++
++    rc = rm.deleteTable("tbl_employee3");
++    if (rc != 0) {
++        std::cout << "Deleting tbl_employee3 failed." << std::endl;
++    }
++
++    rc = rm.deleteTable("tbl_employee4");
++    if (rc != 0) {
++        std::cout << "Deleting tbl_employee4 failed." << std::endl;
++    }
++
++    rc = rm.deleteCatalog();
++    if (rc != 0) {
++        std::cout << "Deleting the catalog failed." << std::endl;
++        return rc;
++    }
++
++    return success;
++}
+diff --git a/rm/rmtest_extra_1.cc b/rm/rmtest_extra_1.cc
+new file mode 100644
+index 0000000..2c88345
+--- /dev/null
++++ b/rm/rmtest_extra_1.cc
+@@ -0,0 +1,84 @@
++#include "rm_test_util.h"
++
++RC RM_TEST_EXTRA_1(const std::string &tableName, const int nameLength, const std::string &name, const int age,
++                   const int height, const int salary) {
++    // Extra Test Case - Functions Tested:
++    // 1. Insert tuple
++    // 2. Read Attributes
++    // 3. Drop Attributes **
++    std::cout << std::endl << "***** In RM Extra Credit Test Case 1 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    void *tuple = malloc(200);
++    void *returnedData = malloc(200);
++
++    // Insert Tuple
++    std::vector<Attribute> attrs;
++    RC rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    int nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    prepareTuple(attrs.size(), nullsIndicator, nameLength, name, age, height, salary, tuple, &tupleSize);
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++    // Read Attribute
++    rc = rm.readAttribute(tableName, rid, "Height", returnedData);
++    assert(rc == success && "RelationManager::readAttribute() should not fail.");
++
++    if (memcmp((char *) returnedData + nullAttributesIndicatorActualSize,
++               (char *) tuple + 22 + nullAttributesIndicatorActualSize, 4) != 0) {
++        std::cout << "RelationManager::readAttribute() failed." << std::endl;
++        std::cout << "***** [FAIL] Extra Credit Test Case 1 Failed. *****" << std::endl;
++        free(returnedData);
++        free(tuple);
++        free(nullsIndicator);
++        return -1;
++    } else {
++        // Drop the attribute
++        rc = rm.dropAttribute(tableName, "Height");
++        assert(rc == success && "RelationManager::dropAttribute() should not fail.");
++
++        // Read Tuple and print the tuple
++        rc = rm.readTuple(tableName, rid, returnedData);
++        assert(rc == success && "RelationManager::readTuple() should not fail.");
++
++        // Get the attribute from the table again
++        std::vector<Attribute> attrs2;
++        rc = rm.getAttributes(tableName, attrs2);
++
++        // The size of the original attribute vector size should be greater than the current one.
++        if (attrs.size() <= attrs2.size()) {
++            std::cout << "***** [FAIL] Extra Credit Test Case 1 Failed. *****" << std::endl;
++            free(tuple);
++            free(returnedData);
++            free(nullsIndicator);
++        } else {
++            rc = rm.printTuple(attrs2, returnedData);
++            assert(rc == success && "RelationManager::printTuple() should not fail.");
++        }
++    }
++
++    free(tuple);
++    free(returnedData);
++    free(nullsIndicator);
++
++    std::cout << "***** Extra Credit Test Case 1 finished. The result will be examined. *****" << std::endl;
++    return success;
++}
++
++int main() {
++    std::string name1 = "Peter Anteater";
++
++    // Drop table for the case where we execute this test multiple times.
++    // We ignore the error code for this operation.
++    rm.deleteTable("tbl_employee100");
++
++    // Create a table
++    createTable("tbl_employee100");
++    return RM_TEST_EXTRA_1("tbl_employee100", 14, name1, 24, 185, 10000);
++}
+diff --git a/rm/rmtest_extra_2.cc b/rm/rmtest_extra_2.cc
+new file mode 100644
+index 0000000..b05316a
+--- /dev/null
++++ b/rm/rmtest_extra_2.cc
+@@ -0,0 +1,76 @@
++#include "rm_test_util.h"
++
++RC RM_TEST_EXTRA_2(const std::string &tableName, const int nameLength, const std::string &name, const int age,
++                   const int height, const int salary, const int ssn) {
++    // Functions Tested
++    // 1. Add Attribute **
++    // 2. Insert Tuple
++    std::cout << std::endl << "***** In RM Extra Credit Test Case 2 *****" << std::endl;
++
++    RID rid;
++    unsigned tupleSize = 0;
++    void *tuple = malloc(200);
++    void *returnedData = malloc(200);
++
++    // Test Add Attribute
++    Attribute attr;
++    attr.name = "SSN";
++    attr.type = TypeInt;
++    attr.length = 4;
++    RC rc = rm.addAttribute(tableName, attr);
++    assert(rc == success && "RelationManager::addAttribute() should not fail.");
++
++    // GetAttributes
++    std::vector<Attribute> attrs;
++    rc = rm.getAttributes(tableName, attrs);
++    assert(rc == success && "RelationManager::getAttributes() should not fail.");
++
++    unsigned nullAttributesIndicatorActualSize = getActualByteForNullsIndicator(attrs.size());
++    auto *nullsIndicator = (unsigned char *) malloc(nullAttributesIndicatorActualSize);
++    memset(nullsIndicator, 0, nullAttributesIndicatorActualSize);
++
++    // Test Insert Tuple
++    prepareTupleAfterAdd(attrs.size(), nullsIndicator, nameLength, name, age, height, salary, ssn, tuple, &tupleSize);
++    rc = rm.insertTuple(tableName, tuple, rid);
++    assert(rc == success && "RelationManager::insertTuple() should not fail.");
++
++    // Test Read Tuple
++    rc = rm.readTuple(tableName, rid, returnedData);
++    assert(rc == success && "RelationManager::readTuple() should not fail.");
++
++    std::cout << "Inserted Data:" << std::endl;
++    rc = rm.printTuple(attrs, tuple);
++
++    std::cout << std::endl << "Returned Data:" << std::endl;
++    rc = rm.printTuple(attrs, returnedData);
++
++    if (memcmp(returnedData, tuple, tupleSize) != 0) {
++        std::cout << "***** [FAIL] Extra Credit Test Case 2 Failed *****" << std::endl << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return -1;
++    } else {
++        std::cout << "***** Extra Credit Test Case 2 Finished. The result will be examined. *****" << std::endl
++                  << std::endl;
++        free(tuple);
++        free(returnedData);
++        free(nullsIndicator);
++        return success;
++    }
++
++}
++
++int main() {
++    std::string name2 = "Victors";
++
++    // Drop table for the case where we execute this test multiple times.
++    // We ignore the error code for this operation.
++    rm.deleteTable("tbl_employee200");
++
++    createTable("tbl_employee200");
++
++    // Add Attributes
++    return RM_TEST_EXTRA_2("tbl_employee200", 7, name2, 22, 180, 6000, 123479765);
++
++}
+-- 
+2.21.0 (Apple Git-120)
+

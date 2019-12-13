@@ -1,0 +1,3586 @@
+From 00647b4f4b6a1ead95dae11e1d3ec63e41ec3d1a Mon Sep 17 00:00:00 2001
+From: Yicong-Huang <hyc541978023@gmail.com>
+Date: Sun, 27 Oct 2019 11:55:27 -0700
+Subject: [PATCH 1/1] Project 3
+
+---
+ CMakeLists.txt        |  22 +++--
+ README.md             |  62 ++++++------
+ ix/ix.cc              |  71 ++++++++++++++
+ ix/ix.h               |  93 ++++++++++++++++++
+ ix/ix_test_util.h     |  15 +++
+ ix/ixtest_01.cc       |  51 ++++++++++
+ ix/ixtest_02.cc       |  95 +++++++++++++++++++
+ ix/ixtest_03.cc       | 103 ++++++++++++++++++++
+ ix/ixtest_04.cc       |  91 ++++++++++++++++++
+ ix/ixtest_05.cc       |  46 +++++++++
+ ix/ixtest_06.cc       |  97 +++++++++++++++++++
+ ix/ixtest_07.cc       |  92 ++++++++++++++++++
+ ix/ixtest_08.cc       | 121 ++++++++++++++++++++++++
+ ix/ixtest_09.cc       | 121 ++++++++++++++++++++++++
+ ix/ixtest_10.cc       | 100 ++++++++++++++++++++
+ ix/ixtest_11.cc       | 212 ++++++++++++++++++++++++++++++++++++++++++
+ ix/ixtest_12.cc       | 121 ++++++++++++++++++++++++
+ ix/ixtest_13.cc       | 164 ++++++++++++++++++++++++++++++++
+ ix/ixtest_14.cc       | 100 ++++++++++++++++++++
+ ix/ixtest_15.cc       |  75 +++++++++++++++
+ ix/ixtest_extra_01.cc | 113 ++++++++++++++++++++++
+ ix/ixtest_extra_02.cc |  99 ++++++++++++++++++++
+ ix/ixtest_p1.cc       | 160 +++++++++++++++++++++++++++++++
+ ix/ixtest_p2.cc       | 209 +++++++++++++++++++++++++++++++++++++++++
+ ix/ixtest_p3.cc       | 100 ++++++++++++++++++++
+ ix/ixtest_p4.cc       | 159 +++++++++++++++++++++++++++++++
+ ix/ixtest_p5.cc       | 137 +++++++++++++++++++++++++++
+ ix/ixtest_p6.cc       | 111 ++++++++++++++++++++++
+ ix/ixtest_pe_01.cc    | 134 ++++++++++++++++++++++++++
+ ix/ixtest_pe_02.cc    |  98 +++++++++++++++++++
+ ix/makefile           |  75 +++++++++++++++
+ project3_report.txt   |  38 ++++++++
+ 32 files changed, 3243 insertions(+), 42 deletions(-)
+ create mode 100644 ix/ix.cc
+ create mode 100644 ix/ix.h
+ create mode 100644 ix/ix_test_util.h
+ create mode 100644 ix/ixtest_01.cc
+ create mode 100644 ix/ixtest_02.cc
+ create mode 100644 ix/ixtest_03.cc
+ create mode 100644 ix/ixtest_04.cc
+ create mode 100644 ix/ixtest_05.cc
+ create mode 100644 ix/ixtest_06.cc
+ create mode 100644 ix/ixtest_07.cc
+ create mode 100644 ix/ixtest_08.cc
+ create mode 100644 ix/ixtest_09.cc
+ create mode 100644 ix/ixtest_10.cc
+ create mode 100644 ix/ixtest_11.cc
+ create mode 100644 ix/ixtest_12.cc
+ create mode 100644 ix/ixtest_13.cc
+ create mode 100644 ix/ixtest_14.cc
+ create mode 100644 ix/ixtest_15.cc
+ create mode 100644 ix/ixtest_extra_01.cc
+ create mode 100644 ix/ixtest_extra_02.cc
+ create mode 100644 ix/ixtest_p1.cc
+ create mode 100644 ix/ixtest_p2.cc
+ create mode 100644 ix/ixtest_p3.cc
+ create mode 100644 ix/ixtest_p4.cc
+ create mode 100644 ix/ixtest_p5.cc
+ create mode 100644 ix/ixtest_p6.cc
+ create mode 100644 ix/ixtest_pe_01.cc
+ create mode 100644 ix/ixtest_pe_02.cc
+ create mode 100644 ix/makefile
+ create mode 100644 project3_report.txt
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4063fba..7158b8f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3,29 +3,35 @@ project(cs222_fall19)
+ 
+ set(CMAKE_CXX_STANDARD 11)
+ 
+-add_custom_target(clean-all
+-        COMMAND rm Index* Indices* left* right* large* group* *out Tables Columns tbl_* *_file)
++add_custom_target(clean-all COMMAND rm Index* Indices* left* right* large* group* *out Tables Columns tbl_* *_file *idx)
+ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O1 -g  -fno-omit-frame-pointer")
+ if (CMAKE_BUILD_TYPE MATCHES Debug)
+     add_definitions(-DDEBUG=1)
+-
+-endif()
++endif ()
+ 
+ add_library(PFM ./rbf/pfm.cc)
+ add_library(RBFM ./rbf/rbfm.cc)
+ add_library(RM ./rm/rm.cc ${RBFM})
++add_library(IX ./ix/ix.cc ${PFM})
+ 
+ 
+ file(GLOB files rbf/rbftest*.cc)
+-foreach(file ${files})
++foreach (file ${files})
+     get_filename_component(name ${file} NAME_WE)
+     add_executable(${name} ${file})
+     target_link_libraries(${name} RBFM PFM)
+-endforeach()
++endforeach ()
+ 
+ file(GLOB files rm/rmtest_*.cc)
+-foreach(file ${files})
++foreach (file ${files})
+     get_filename_component(name ${file} NAME_WE)
+     add_executable(${name} ${file})
+     target_link_libraries(${name} RM RBFM PFM)
+-endforeach()
+\ No newline at end of file
++endforeach ()
++
++file(GLOB files ix/ixtest_*.cc)
++foreach (file ${files})
++    get_filename_component(name ${file} NAME_WE)
++    add_executable(${name} ${file})
++    target_link_libraries(${name} IX RM RBFM PFM)
++endforeach ()
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index 4b35ce0..529131c 100644
+--- a/README.md
++++ b/README.md
+@@ -6,46 +6,40 @@ If you are not using CLion and want to use command line make tool:
+  - Modify the "CODEROOT" variable in makefile.inc to point to the root
+   of your code base if you can't compile the code.
+  
+- - Finish the Record-based Files (RBF) Component:
+-   
+-   Go to folder "rbf" and test in the following order:
+-   ```
+-   make clean
+-   make
+-   ./rbftest_update
+-   ./rbftest_delete
+-   ```
+-  
+- - and then implement the Relation Manager (RM):
++ - Implement the Index Manager (IX):
+ 
+-   Go to folder "rm" and test in the following order:
++   Go to folder "ix" and test in the following order:
+ 
+    ```
+    make clean
+    make      
+-   ./rmtest_create_tables
+-   ./rmtest_00   
+-   ./rmtest_01  
+-   ./rmtest_02
+-   ./rmtest_03
+-   ./rmtest_04
+-   ./rmtest_05
+-   ./rmtest_06
+-   ./rmtest_07
+-   ./rmtest_08
+-   ./rmtest_09
+-   ./rmtest_10
+-   ./rmtest_11
+-   ./rmtest_12
+-   ./rmtest_13
+-   ./rmtest_13b
+-   ./rmtest_14
+-   ./rmtest_15
+-   ./rmtest_extra_1
+-   ./rmtest_extra_2
++   ./ixtest_01  
++   ./ixtest_02
++   ./ixtest_03
++   ./ixtest_04
++   ./ixtest_05
++   ./ixtest_06
++   ./ixtest_07
++   ./ixtest_08
++   ./ixtest_09
++   ./ixtest_10
++   ./ixtest_11
++   ./ixtest_12
++   ./ixtest_13
++   ./ixtest_14
++   ./ixtest_15
++   ./ixtest_extra_01
++   ./ixtest_extra_02   
++   ./ixtest_p1  
++   ./ixtest_p2
++   ./ixtest_p3
++   ./ixtest_p4
++   ./ixtest_p5
++   ./ixtest_p6    
++   ./ixtest_pe_01
++   ./ixtest_pe_02
+    
+    ```
+ 
+    The program should run. But initially it will generates an error. You are supposed to
+-   implement the API of the rest of the methods in rbfm.h and methods in rm.h as explained 
+-   in the project description.
+\ No newline at end of file
++   implement the API of the rest of the methods in ix.h as explained in the project description.
+\ No newline at end of file
+diff --git a/ix/ix.cc b/ix/ix.cc
+new file mode 100644
+index 0000000..e243c20
+--- /dev/null
++++ b/ix/ix.cc
+@@ -0,0 +1,71 @@
++#include "ix.h"
++
++IndexManager &IndexManager::instance() {
++    static IndexManager _index_manager = IndexManager();
++    return _index_manager;
++}
++
++RC IndexManager::createFile(const std::string &fileName) {
++    return -1;
++}
++
++RC IndexManager::destroyFile(const std::string &fileName) {
++    return -1;
++}
++
++RC IndexManager::openFile(const std::string &fileName, IXFileHandle &ixFileHandle) {
++    return -1;
++}
++
++RC IndexManager::closeFile(IXFileHandle &ixFileHandle) {
++    return -1;
++}
++
++RC IndexManager::insertEntry(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid) {
++    return -1;
++}
++
++RC IndexManager::deleteEntry(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid) {
++    return -1;
++}
++
++RC IndexManager::scan(IXFileHandle &ixFileHandle,
++                      const Attribute &attribute,
++                      const void *lowKey,
++                      const void *highKey,
++                      bool lowKeyInclusive,
++                      bool highKeyInclusive,
++                      IX_ScanIterator &ix_ScanIterator) {
++    return -1;
++}
++
++void IndexManager::printBtree(IXFileHandle &ixFileHandle, const Attribute &attribute) const {
++}
++
++IX_ScanIterator::IX_ScanIterator() {
++}
++
++IX_ScanIterator::~IX_ScanIterator() {
++}
++
++RC IX_ScanIterator::getNextEntry(RID &rid, void *key) {
++    return -1;
++}
++
++RC IX_ScanIterator::close() {
++    return -1;
++}
++
++IXFileHandle::IXFileHandle() {
++    ixReadPageCounter = 0;
++    ixWritePageCounter = 0;
++    ixAppendPageCounter = 0;
++}
++
++IXFileHandle::~IXFileHandle() {
++}
++
++RC IXFileHandle::collectCounterValues(unsigned &readPageCount, unsigned &writePageCount, unsigned &appendPageCount) {
++    return -1;
++}
++
+diff --git a/ix/ix.h b/ix/ix.h
+new file mode 100644
+index 0000000..b19bb67
+--- /dev/null
++++ b/ix/ix.h
+@@ -0,0 +1,93 @@
++#ifndef _ix_h_
++#define _ix_h_
++
++#include <vector>
++#include <string>
++
++#include "../rbf/rbfm.h"
++
++# define IX_EOF (-1)  // end of the index scan
++
++class IX_ScanIterator;
++
++class IXFileHandle;
++
++class IndexManager {
++
++public:
++    static IndexManager &instance();
++
++    // Create an index file.
++    RC createFile(const std::string &fileName);
++
++    // Delete an index file.
++    RC destroyFile(const std::string &fileName);
++
++    // Open an index and return an ixFileHandle.
++    RC openFile(const std::string &fileName, IXFileHandle &ixFileHandle);
++
++    // Close an ixFileHandle for an index.
++    RC closeFile(IXFileHandle &ixFileHandle);
++
++    // Insert an entry into the given index that is indicated by the given ixFileHandle.
++    RC insertEntry(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid);
++
++    // Delete an entry from the given index that is indicated by the given ixFileHandle.
++    RC deleteEntry(IXFileHandle &ixFileHandle, const Attribute &attribute, const void *key, const RID &rid);
++
++    // Initialize and IX_ScanIterator to support a range search
++    RC scan(IXFileHandle &ixFileHandle,
++            const Attribute &attribute,
++            const void *lowKey,
++            const void *highKey,
++            bool lowKeyInclusive,
++            bool highKeyInclusive,
++            IX_ScanIterator &ix_ScanIterator);
++
++    // Print the B+ tree in pre-order (in a JSON record format)
++    void printBtree(IXFileHandle &ixFileHandle, const Attribute &attribute) const;
++
++protected:
++    IndexManager() = default;                                                   // Prevent construction
++    ~IndexManager() = default;                                                  // Prevent unwanted destruction
++    IndexManager(const IndexManager &) = default;                               // Prevent construction by copying
++    IndexManager &operator=(const IndexManager &) = default;                    // Prevent assignment
++
++};
++
++class IX_ScanIterator {
++public:
++
++    // Constructor
++    IX_ScanIterator();
++
++    // Destructor
++    ~IX_ScanIterator();
++
++    // Get next matching entry
++    RC getNextEntry(RID &rid, void *key);
++
++    // Terminate index scan
++    RC close();
++};
++
++class IXFileHandle {
++public:
++
++    // variables to keep counter for each operation
++    unsigned ixReadPageCounter;
++    unsigned ixWritePageCounter;
++    unsigned ixAppendPageCounter;
++
++    // Constructor
++    IXFileHandle();
++
++    // Destructor
++    ~IXFileHandle();
++
++    // Put the current counter values of associated PF FileHandles into variables
++    RC collectCounterValues(unsigned &readPageCount, unsigned &writePageCount, unsigned &appendPageCount);
++
++};
++
++#endif
+diff --git a/ix/ix_test_util.h b/ix/ix_test_util.h
+new file mode 100644
+index 0000000..96600f4
+--- /dev/null
++++ b/ix/ix_test_util.h
+@@ -0,0 +1,15 @@
++#ifndef _ix_test_util_h_
++#define _ix_test_util_h_
++
++#ifndef _fail_
++#define _fail_
++const int fail = -1;
++#endif
++
++#include "../rbf/test_util.h"
++
++IndexManager &indexManager = IndexManager::instance();
++
++#endif
++
++
+diff --git a/ix/ixtest_01.cc b/ix/ixtest_01.cc
+new file mode 100644
+index 0000000..0470f3e
+--- /dev/null
++++ b/ix/ixtest_01.cc
+@@ -0,0 +1,51 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++RC testCase_1(const std::string &indexFileName) {
++    // Functions tested
++    // 1. Create Index File **
++    // 2. Open Index File **
++    // 3. Create Index File -- when index file is already created **
++    // 4. Open Index File ** -- when a file handle is already opened **
++    // 5. Close Index File **
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 01 *****" << std::endl;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    IXFileHandle ixFileHandle;
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // create duplicate index file
++    rc = indexManager.createFile(indexFileName);
++    assert(rc != success && "Calling indexManager::createFile() on an existing file should fail.");
++
++    // open index file again using the file handle that is already opened.
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc != success && "Calling indexManager::openFile() using an already opened file handle should fail.");
++
++    // close index file
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    indexManager.destroyFile("age_idx");
++
++    if (testCase_1(indexFileName) == success) {
++        std::cerr << "***** IX Test Case 01 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 01 failed. *****" << std::endl;
++        return fail;
++    }
++}
++
+diff --git a/ix/ixtest_02.cc b/ix/ixtest_02.cc
+new file mode 100644
+index 0000000..a9d4b7b
+--- /dev/null
++++ b/ix/ixtest_02.cc
+@@ -0,0 +1,95 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_2(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Open Index file
++    // 2. Insert entry **
++    // 3. Disk I/O check of Insertion - CollectCounterValues **
++    // 4. print B+ Tree **
++    // 5. Close Index file
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 02 *****" << std::endl;
++
++    RID rid;
++    int key = 200;
++    rid.pageNum = 500;
++    rid.slotNum = 20;
++
++    unsigned readPageCount = 0;
++    unsigned writePageCount = 0;
++    unsigned appendPageCount = 0;
++    unsigned readPageCountAfter = 0;
++    unsigned writePageCountAfter = 0;
++    unsigned appendPageCountAfter = 0;
++    unsigned readDiff = 0;
++    unsigned writeDiff = 0;
++    unsigned appendDiff = 0;
++
++    // open index file
++    IXFileHandle ixFileHandle;
++    RC rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // collect counters
++    rc = ixFileHandle.collectCounterValues(readPageCount, writePageCount, appendPageCount);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << std::endl << "Before Insert - R W A: " << readPageCount << " " << writePageCount << " "
++              << appendPageCount
++              << std::endl;
++
++    // insert entry
++    rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++    assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++    // collect counters
++    rc = ixFileHandle.collectCounterValues(readPageCountAfter, writePageCountAfter, appendPageCountAfter);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "After Insert - R W A: " << readPageCountAfter << " " << writePageCountAfter << " "
++              << appendPageCountAfter
++              << std::endl;
++
++    readDiff = readPageCountAfter - readPageCount;
++    writeDiff = writePageCountAfter - writePageCount;
++    appendDiff = appendPageCountAfter - appendPageCount;
++
++    std::cerr << "Page I/O count of single insertion - R W A: " << readDiff << " " << writeDiff << " " << appendDiff
++              << std::endl;
++
++    if (readDiff == 0 && writeDiff == 0 && appendDiff == 0) {
++        std::cerr << "Insertion should generate some page I/O. The implementation is not correct." << std::endl;
++        rc = indexManager.closeFile(ixFileHandle);
++        return fail;
++    }
++
++    // print BTree, by this time the BTree should have only one node
++    std::cerr << std::endl;
++    indexManager.printBtree(ixFileHandle, attribute);
++
++    // close index file
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    if (testCase_2(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 02 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 02 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_03.cc b/ix/ixtest_03.cc
+new file mode 100644
+index 0000000..0f81bde
+--- /dev/null
++++ b/ix/ixtest_03.cc
+@@ -0,0 +1,103 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_3(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Open Index file
++    // 2. Disk I/O check of Scan and getNextEntry - CollectCounterValues **
++    // 3. Close Index file
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 03 *****" << std::endl;
++
++    RID rid;
++    int key = 200;
++    rid.pageNum = 500;
++    rid.slotNum = 20;
++
++    unsigned readPageCount = 0;
++    unsigned writePageCount = 0;
++    unsigned appendPageCount = 0;
++    unsigned readPageCountAfter = 0;
++    unsigned writePageCountAfter = 0;
++    unsigned appendPageCountAfter = 0;
++    unsigned readDiff = 0;
++    unsigned writeDiff = 0;
++    unsigned appendDiff = 0;
++
++    IX_ScanIterator ix_ScanIterator;
++
++    // open index file
++    IXFileHandle ixFileHandle;
++    RC rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // collect counters
++    rc = ixFileHandle.collectCounterValues(readPageCount, writePageCount, appendPageCount);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "Before scan - R W A: " << readPageCount << " " << writePageCount << " " << appendPageCount
++              << std::endl;
++
++    // Conduct a scan
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // There should be one record
++    int count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        std::cerr << "Returned rid from a scan: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        assert(rid.pageNum == 500 && "rid.pageNum is not correct.");
++        assert(rid.slotNum == 20 && "rid.slotNum is not correct.");
++        count++;
++    }
++    assert(count == 1 && "scan count is not correct.");
++
++    // collect counters
++    rc = ixFileHandle.collectCounterValues(readPageCountAfter, writePageCountAfter, appendPageCountAfter);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "After scan - R W A: " << readPageCountAfter << " " << writePageCountAfter << " "
++              << appendPageCountAfter << std::endl;
++
++    readDiff = readPageCountAfter - readPageCount;
++    writeDiff = writePageCountAfter - writePageCount;
++    appendDiff = appendPageCountAfter - appendPageCount;
++
++    std::cerr << "Page I/O count of scan - R W A: " << readDiff << " " << writeDiff << " " << appendDiff << std::endl;
++
++    if (readDiff == 0 && writeDiff == 0 && appendDiff == 0) {
++        std::cerr << "Scan should generate some page I/O. The implementation is not correct." << std::endl;
++        ix_ScanIterator.close();
++        indexManager.closeFile(ixFileHandle);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close index file
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    if (testCase_3(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 03 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 03 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_04.cc b/ix/ixtest_04.cc
+new file mode 100644
+index 0000000..d63a52b
+--- /dev/null
++++ b/ix/ixtest_04.cc
+@@ -0,0 +1,91 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_4(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Open Index file
++    // 2. Disk I/O check of deleteEntry - CollectCounterValues **
++    // 3. Close Index file
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 04 *****" << std::endl;
++
++    RID rid;
++    int key = 200;
++    rid.pageNum = 500;
++    rid.slotNum = 20;
++
++    unsigned readPageCount = 0;
++    unsigned writePageCount = 0;
++    unsigned appendPageCount = 0;
++    unsigned readPageCountAfter = 0;
++    unsigned writePageCountAfter = 0;
++    unsigned appendPageCountAfter = 0;
++    unsigned readDiff = 0;
++    unsigned writeDiff = 0;
++    unsigned appendDiff = 0;
++
++    // open index file
++    IXFileHandle ixFileHandle;
++    RC rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // collect counters
++    rc = ixFileHandle.collectCounterValues(readPageCount, writePageCount, appendPageCount);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "Before DeleteEntry - R W A: " << readPageCount << " " << writePageCount << " " << appendPageCount
++              << std::endl;
++
++    // delete entry
++    rc = indexManager.deleteEntry(ixFileHandle, attribute, &key, rid);
++    assert(rc == success && "indexManager::deleteEntry() should not fail.");
++
++    rc = ixFileHandle.collectCounterValues(readPageCountAfter, writePageCountAfter, appendPageCountAfter);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "After DeleteEntry - R W A: " << readPageCountAfter << " " << writePageCountAfter << " "
++              << appendPageCountAfter << std::endl;
++
++    // collect counters
++    readDiff = readPageCountAfter - readPageCount;
++    writeDiff = writePageCountAfter - writePageCount;
++    appendDiff = appendPageCountAfter - appendPageCount;
++
++    std::cerr << "Page I/O count of single deletion - R W A: " << readDiff << " " << writeDiff << " " << appendDiff
++              << std::endl;
++
++    if (readDiff == 0 && writeDiff == 0 && appendDiff == 0) {
++        std::cerr << "Deletion should generate some page I/O. The implementation is not correct." << std::endl;
++        rc = indexManager.closeFile(ixFileHandle);
++        return fail;
++    }
++
++    // delete entry again - should fail
++    rc = indexManager.deleteEntry(ixFileHandle, attribute, &key, rid);
++    assert(rc != success && "indexManager::deleteEntry() should fail.");
++
++    // close index file
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    if (testCase_4(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 04 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 04 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_05.cc b/ix/ixtest_05.cc
+new file mode 100644
+index 0000000..893f907
+--- /dev/null
++++ b/ix/ixtest_05.cc
+@@ -0,0 +1,46 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_5(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Destroy Index File **
++    // 2. Open Index File -- should fail
++    // 3. Scan  -- should fail
++    std::cerr << std::endl << "***** In IX Test Case 05 *****" << std::endl;
++
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++
++    // destroy index file
++    RC rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    // Try to open the destroyed index
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc != success && "indexManager::openFile() on a non-existing file should fail.");
++
++    // Try to conduct a scan on the destroyed index
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc != success && "indexManager::scan() on a non-existing file should fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    if (testCase_5(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 05 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 05 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
+diff --git a/ix/ixtest_06.cc b/ix/ixtest_06.cc
+new file mode 100644
+index 0000000..e255728
+--- /dev/null
++++ b/ix/ixtest_06.cc
+@@ -0,0 +1,97 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_6(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Create Index File
++    // 2. Open Index File
++    // 3. Insert entry
++    // 4. Scan entries NO_OP -- open
++    // 5. Scan close **
++    // 6. Close Index File
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 06 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned key;
++    int inRidSlotNumSum = 0;
++    int outRidSlotNumSum = 0;
++    unsigned numOfTuples = 1000;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entries
++    for (unsigned i = 0; i <= numOfTuples; i++) {
++        key = i;
++        rid.pageNum = key;
++        rid.slotNum = key * 3;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        inRidSlotNumSum += rid.slotNum;
++    }
++
++    // Scan
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // Fetch all entries
++    int count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++
++        if (rid.pageNum % 200 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++        outRidSlotNumSum += rid.slotNum;
++    }
++
++    // Inconsistency between insert and scan?
++    if (inRidSlotNumSum != outRidSlotNumSum) {
++        std::cerr << "Wrong entries output... The test failed." << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    indexManager.destroyFile("age_idx");
++
++    if (testCase_6(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 06 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 06 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_07.cc b/ix/ixtest_07.cc
+new file mode 100644
+index 0000000..c55f917
+--- /dev/null
++++ b/ix/ixtest_07.cc
+@@ -0,0 +1,92 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_7(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Open Index File that created by test case 6
++    // 2. Scan entries NO_OP -- open
++    // 3. Scan close
++    // 4. Close Index File
++    // 5. Destroy Index File
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 07 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned key;
++    int inRidSlotNumSum = 0;
++    int outRidSlotNumSum = 0;
++    unsigned numOfTuples = 1000;
++
++    // open index file
++    RC rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // compute inRidPageNumSum without inserting entries
++    for (unsigned i = 0; i <= numOfTuples; i++) {
++        key = i;
++        rid.pageNum = key;
++        rid.slotNum = key * 3;
++
++        inRidSlotNumSum += rid.slotNum;
++    }
++
++    // scan
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // Fetch all entries
++    int count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++
++        if (rid.pageNum % 200 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++        outRidSlotNumSum += rid.slotNum;
++    }
++
++    // scan fail?
++    if (inRidSlotNumSum != outRidSlotNumSum) {
++        std::cerr << "Wrong entries output... The test failed." << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        rc = indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    if (testCase_7(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 07 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 07 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_08.cc b/ix/ixtest_08.cc
+new file mode 100644
+index 0000000..9ecfe3f
+--- /dev/null
++++ b/ix/ixtest_08.cc
+@@ -0,0 +1,121 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_8(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Create Index File
++    // 2. Open Index File
++    // 3. Insert entry
++    // 4. Scan entries using GE_OP operator and checking if the values returned are correct. **
++    // 5. Scan close
++    // 6. Close Index File
++    // 7. Destroy Index File
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 08 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned numOfTuples = 300;
++    unsigned numOfMoreTuples = 100;
++    unsigned key;
++    int inRidSlotNumSum = 0;
++    int outRidSlotNumSum = 0;
++    unsigned value = 7001;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert Entries
++    for (unsigned i = 1; i <= numOfTuples; i++) {
++        key = i;
++        rid.pageNum = key;
++        rid.slotNum = key * 3;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // Insert more entries
++    for (unsigned i = value; i < value + numOfMoreTuples; i++) {
++        key = i;
++        rid.pageNum = key;
++        rid.slotNum = key * 3;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        inRidSlotNumSum += rid.slotNum;
++    }
++
++    // Scan
++    rc = indexManager.scan(ixFileHandle, attribute, &value, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // IndexScan iterator
++    unsigned count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++
++        if (rid.pageNum % 100 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++        if (rid.pageNum < value || rid.slotNum < value * 3) {
++            std::cerr << "Wrong entries output... The test failed" << std::endl;
++            rc = ix_ScanIterator.close();
++            rc = indexManager.closeFile(ixFileHandle);
++            rc = indexManager.destroyFile(indexFileName);
++            return fail;
++        }
++        outRidSlotNumSum += rid.slotNum;
++    }
++
++    // Inconsistency check
++    if (inRidSlotNumSum != outRidSlotNumSum) {
++        std::cerr << "Wrong entries output... The test failed" << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    indexManager.destroyFile("age_idx");
++
++    if (testCase_8(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 08 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 08 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_09.cc b/ix/ixtest_09.cc
+new file mode 100644
+index 0000000..d7252f6
+--- /dev/null
++++ b/ix/ixtest_09.cc
+@@ -0,0 +1,121 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_9(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Create Index File
++    // 2. Open Index File
++    // 3. Insert entry
++    // 4. Scan entries using LT_OP operator and checking if the values returned are correct.
++    //    Returned values are part of two separate insertions. **
++    // 5. Scan close
++    // 6. Close Index File
++    // 7. Destroy Index File
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 09 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned numOfTuples = 2000;
++    unsigned numOfMoreTuples = 6000;
++    float key;
++    float compVal = 6500;
++    int inRidSlotNumSum = 0;
++    int outRidSlotNumSum = 0;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entries
++    for (unsigned i = 1; i <= numOfTuples; i++) {
++        key = (float) i + 87.6;
++        rid.pageNum = i;
++        rid.slotNum = i;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        if (key < compVal) {
++            inRidSlotNumSum += rid.slotNum;
++        }
++    }
++
++    // insert more entries
++    for (unsigned i = 6000; i <= numOfTuples + numOfMoreTuples; i++) {
++        key = (float) i + 87.6;
++        rid.pageNum = i;
++        rid.slotNum = i - (unsigned) 500;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        if (key < compVal) {
++            inRidSlotNumSum += rid.slotNum;
++        }
++    }
++
++    // scan
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, &compVal, true, false, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // iterate
++    unsigned count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++        if (rid.pageNum % 500 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++        outRidSlotNumSum += rid.slotNum;
++    }
++
++    // Inconsistency between input and output?
++    if (inRidSlotNumSum != outRidSlotNumSum) {
++        std::cerr << "Wrong entries output... The test failed" << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        rc = indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexFileName = "height_idx";
++    Attribute attrHeight;
++    attrHeight.length = 4;
++    attrHeight.name = "height";
++    attrHeight.type = TypeReal;
++
++    indexManager.destroyFile("height_idx");
++
++    if (testCase_9(indexFileName, attrHeight) == success) {
++        std::cerr << "***** IX Test Case 09 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 09 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_10.cc b/ix/ixtest_10.cc
+new file mode 100644
+index 0000000..75e9f2e
+--- /dev/null
++++ b/ix/ixtest_10.cc
+@@ -0,0 +1,100 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_10(const std::string &indexFileName, const Attribute &attribute) {
++    // Functions tested
++    // 1. Create Index File
++    // 2. Open Index File
++    // 3. Insert entries with two different keys
++    // 4. Scan entries that match one of the keys **
++    // 5. Scan close **
++    // 6. Close Index File
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 10 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned key1 = 200;
++    unsigned key2 = 500;
++    unsigned numOfTuples = 50;
++
++    int inRidSlotNumSum = 0;
++    int outRidSlotNumSum = 0;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entries
++    for (unsigned i = 0; i <= numOfTuples / 2; i++) {
++        rid.pageNum = i + 1;
++        rid.slotNum = i + 2;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key1, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++        inRidSlotNumSum += rid.slotNum;
++
++        rid.pageNum = i + 101;
++        rid.slotNum = i + 102;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key2, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // Scan
++    rc = indexManager.scan(ixFileHandle, attribute, &key1, &key1, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // iterate
++    unsigned count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key1) == success) {
++        count++;
++        if (count % 10 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++        outRidSlotNumSum += rid.slotNum;
++    }
++
++    // Inconsistency?
++    if (inRidSlotNumSum != outRidSlotNumSum) {
++        std::cerr << "Wrong entries output... The test failed" << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    indexManager.destroyFile("age_idx");
++
++    if (testCase_10(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 10 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 10 failed. *****" << std::endl;
++        return fail;
++    }
++}
+diff --git a/ix/ixtest_11.cc b/ix/ixtest_11.cc
+new file mode 100644
+index 0000000..a32c776
+--- /dev/null
++++ b/ix/ixtest_11.cc
+@@ -0,0 +1,212 @@
++
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_11(const std::string &indexFileName, const Attribute &attribute) {
++    // Create Index file
++    // Open Index file
++    // Insert large number of records
++    // Scan large number of records to validate insert correctly
++    // Delete some tuples
++    // Insert large number of records again
++    // Scan large number of records to validate insert correctly
++    // Delete all
++    // Close Index
++    // Destroy Index
++
++    std::cerr << std::endl << "***** In IX Test Case 11 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned key;
++    unsigned inRecordNum = 0;
++    unsigned outRecordNum = 0;
++    unsigned numOfTuples = 1000 * 1000;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entries
++    for (unsigned i = 0; i <= numOfTuples; i++) {
++        key = i;
++        rid.pageNum = key + 1;
++        rid.slotNum = key + 2;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++        inRecordNum += 1;
++        if (inRecordNum % 200000 == 0) {
++            std::cerr << inRecordNum << " inserted - rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++    }
++
++    // scan
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // Iterate
++    std::cerr << std::endl;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        if (rid.pageNum != key + 1 || rid.slotNum != key + 2) {
++            std::cerr << "Wrong entries output... The test failed." << std::endl;
++            rc = ix_ScanIterator.close();
++            rc = indexManager.closeFile(ixFileHandle);
++            return fail;
++        }
++        outRecordNum += 1;
++        if (outRecordNum % 200000 == 0) {
++            std::cerr << outRecordNum << " scanned. " << std::endl;
++        }
++    }
++
++    // Inconsistency?
++    if (inRecordNum != outRecordNum || inRecordNum == 0 || outRecordNum == 0) {
++        std::cerr << "Wrong entries output... The test failed." << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        return fail;
++    }
++
++    // Delete some tuples
++    std::cerr << std::endl;
++    unsigned deletedRecordNum = 0;
++    for (unsigned i = 5; i <= numOfTuples; i += 10) {
++        key = i;
++        rid.pageNum = key + 1;
++        rid.slotNum = key + 2;
++
++        rc = indexManager.deleteEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::deleteEntry() should not fail.");
++
++        deletedRecordNum += 1;
++        if (deletedRecordNum % 20000 == 0) {
++            std::cerr << deletedRecordNum << " deleted. " << std::endl;
++        }
++    }
++
++    // Close Scan and reinitialize the scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "IX_ScanIterator::scan() should not fail.");
++
++    std::cerr << std::endl;
++    // Iterate
++    outRecordNum = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        if (rid.pageNum != key + 1 || rid.slotNum != key + 2) {
++            std::cerr << "Wrong entries output... The test failed." << std::endl;
++            rc = ix_ScanIterator.close();
++            rc = indexManager.closeFile(ixFileHandle);
++            return fail;
++        }
++        outRecordNum += 1;
++        if (outRecordNum % 200000 == 0) {
++            std::cerr << outRecordNum << " scanned. " << std::endl;
++        }
++
++    }
++    std::cerr << outRecordNum << " scanned. " << std::endl;
++
++    // Inconsistency?
++    if ((inRecordNum - deletedRecordNum) != outRecordNum || inRecordNum == 0 || deletedRecordNum == 0 ||
++        outRecordNum == 0) {
++        std::cerr << "Wrong entries output... The test failed." << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        return fail;
++    }
++
++    // Insert the deleted entries again
++    int reInsertedRecordNum = 0;
++    std::cerr << std::endl;
++    for (unsigned i = 5; i <= numOfTuples; i += 10) {
++        key = i;
++        rid.pageNum = key + 1;
++        rid.slotNum = key + 2;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        reInsertedRecordNum += 1;
++        if (reInsertedRecordNum % 20000 == 0) {
++            std::cerr << reInsertedRecordNum << " inserted - rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++    }
++
++    // Close Scan and reinitialize the scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "IX_ScanIterator::scan() should not fail.");
++
++    // Iterate
++    std::cerr << std::endl;
++    outRecordNum = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        if (rid.pageNum != key + 1 || rid.slotNum != key + 2) {
++            std::cerr << "Wrong entries output... The test failed." << std::endl;
++            rc = ix_ScanIterator.close();
++            rc = indexManager.closeFile(ixFileHandle);
++            return fail;
++        }
++        outRecordNum += 1;
++
++        if (outRecordNum % 200000 == 0) {
++            std::cerr << outRecordNum << " scanned. " << std::endl;
++        }
++
++    }
++
++    // Inconsistency?
++    if ((inRecordNum - deletedRecordNum + reInsertedRecordNum) != outRecordNum || inRecordNum == 0
++        || reInsertedRecordNum == 0 || outRecordNum == 0) {
++        std::cerr << "Wrong entries output... The test failed." << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        rc = indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    indexManager.destroyFile("age_idx");
++
++    if (testCase_11(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 11 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 11 failed. *****" << std::endl;
++        return fail;
++    }
++}
++
+diff --git a/ix/ixtest_12.cc b/ix/ixtest_12.cc
+new file mode 100644
+index 0000000..a721aba
+--- /dev/null
++++ b/ix/ixtest_12.cc
+@@ -0,0 +1,121 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_12(const std::string &indexFileName, const Attribute &attribute) {
++    // Checks whether deleting an entry after getNextEntry() in a scan is handled properly or not.
++    //    An example:
++    //    IX_ScanIterator ix_ScanIterator;
++    //    indexManager.scan(ixFileHandle, ..., ix_ScanIterator);
++    //    while ((rc = ix_ScanIterator.getNextEntry(rid, &key)) != IX_EOF)
++    //    {
++    //       indexManager.deleteEntry(ixFileHandle, attribute, &key, rid);
++    //    }
++
++    // Functions tested
++    // 1. Create Index File
++    // 2. OpenIndex File
++    // 3. Insert entry
++    // 4. Scan entries - EXACT MATCH, and delete entries
++    // 5. Scan close
++    // 6. CloseIndex File
++    // 7. DestroyIndex File
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Case 12 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    float compVal = 100.0;
++    unsigned numOfTuples = 200;
++    float key;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // Insert entries
++    key = compVal;
++
++    for (unsigned i = 1; i <= numOfTuples; i++) {
++        rid.pageNum = i;
++        rid.slotNum = i;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // scan - EXACT MATCH
++    rc = indexManager.scan(ixFileHandle, attribute, &compVal, &compVal, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // Delete entries in IndexScan Iterator
++    unsigned count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++
++        if (count % 100 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++        RC rc = indexManager.deleteEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::deleteEntry() should not fail.");
++    }
++    std::cerr << std::endl;
++
++    // close scan and open scan again
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    rc = indexManager.scan(ixFileHandle, attribute, &compVal, &compVal, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // iterate - should fail
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        std::cerr << "Wrong entry returned: " << rid.pageNum << " " << rid.slotNum << " --- The test failed."
++                  << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        rc = indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexFileName = "height_idx";
++    Attribute attrHeight;
++    attrHeight.length = 4;
++    attrHeight.name = "height";
++    attrHeight.type = TypeReal;
++
++    indexManager.destroyFile("height_idx");
++
++    RC result = testCase_12(indexFileName, attrHeight);
++    if (result == success) {
++        std::cerr << "***** IX Test Case 12 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 12 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_13.cc b/ix/ixtest_13.cc
+new file mode 100644
+index 0000000..0731511
+--- /dev/null
++++ b/ix/ixtest_13.cc
+@@ -0,0 +1,164 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_13(const std::string &indexFileName, const Attribute &attribute) {
++    // Checks whether VARCHAR type is handled properly or not.
++    //
++    // Functions Tested:
++    // 1. Create Index
++    // 2. Open Index
++    // 3. Insert Entry
++    // 4. Get Insert IO count
++    // 5. Scan
++    // 6. Get Scan IO count
++    // 7. Close Scan
++    // 8. Close Index
++    // 9. Destroy Index
++    std::cerr << std::endl << "***** In IX Test Case 13 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned offset;
++    unsigned numOfTuples = 1000;
++    unsigned numOfMoreTuples = 5;
++    char key[100];
++    unsigned count;
++    unsigned tested_ascii = 20;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    int numOfTuplesTobeScanned = 0;
++
++    // insert entries
++    for (unsigned i = 1; i <= numOfTuples; i++) {
++        count = ((i - 1) % 26) + 1;
++        *(int *) key = count;
++        for (unsigned j = 0; j < count; j++) {
++            key[4 + j] = 'a' + count - 1;
++        }
++
++        rid.pageNum = i;
++        rid.slotNum = i;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        if (count == tested_ascii) {
++            numOfTuplesTobeScanned++;
++        }
++    }
++
++    // insert more entries
++    *(int *) key = tested_ascii;
++    for (unsigned j = 0; j < tested_ascii; j++) {
++        key[4 + j] = 'a' + tested_ascii - 1;
++    }
++    for (unsigned i = 1; i < numOfMoreTuples; i++) {
++        rid.pageNum = 26 * (50 + i) + tested_ascii;
++        rid.slotNum = 26 * (50 + i) + tested_ascii;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        numOfTuplesTobeScanned++;
++    }
++
++    // collect counter
++    // we will eyeball those numbers to see if they are reasonable.
++    unsigned readPageCount = 0;
++    unsigned writePageCount = 0;
++    unsigned appendPageCount = 0;
++    rc = ixFileHandle.collectCounterValues(readPageCount, writePageCount, appendPageCount);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "IO count after insertion: R W A - "
++              << readPageCount
++              << " " << writePageCount
++              << " " << appendPageCount << std::endl;
++
++    //scan
++    offset = tested_ascii;
++    *(int *) key = offset;
++    for (unsigned j = 0; j < offset; j++) {
++        key[4 + j] = 'a' + offset - 1;
++    }
++
++    rc = indexManager.scan(ixFileHandle, attribute, &key, &key, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    int count1 = 0;
++    //iterate
++    std::cerr << std::endl;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        if (((rid.pageNum - 1) % 26 + 1) != offset) {
++            std::cerr << "Wrong entry output... " << rid.pageNum << " " << rid.slotNum << " " << " - The test failed..."
++                      << std::endl;
++            return fail;
++        }
++        count1++;
++        if (count1 % 20 == 0) {
++            std::cerr << count1 << " scanned - returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++    }
++    std::cerr << std::endl;
++
++    if (count1 != numOfTuplesTobeScanned) {
++        std::cerr << "Wrong entry output... The test failed..." << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        rc = indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // collect counter
++    rc = ixFileHandle.collectCounterValues(readPageCount, writePageCount, appendPageCount);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "IO count after scan: R W A - "
++              << readPageCount
++              << " " << writePageCount
++              << " " << appendPageCount << std::endl;
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexEmpNameFileName = "EmpName_idx";
++
++    Attribute attrEmpName;
++    attrEmpName.length = 100;
++    attrEmpName.name = "EmpName";
++    attrEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile("EmpName_idx");
++
++    if (testCase_13(indexEmpNameFileName, attrEmpName) == success) {
++        std::cerr << "***** IX Test Case 13 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 13 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_14.cc b/ix/ixtest_14.cc
+new file mode 100644
+index 0000000..424ffbe
+--- /dev/null
++++ b/ix/ixtest_14.cc
+@@ -0,0 +1,100 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++void prepareKeyAndRid(const unsigned count, const unsigned i, char *key, RID &rid) {
++    *(int *) key = count;
++    for (unsigned j = 0; j < count; j++) {
++        key[4 + j] = 'a' + i - 1;
++    }
++    rid.pageNum = i;
++    rid.slotNum = i;
++}
++
++int testCase_14(const std::string &indexFileName,
++                const Attribute &attribute) {
++    // Checks whether the insertion is implemented correctly (split should happen)
++    // Functions tested
++    // 1. CreateIndex
++    // 2. OpenIndex
++    // 3. Insert entries to make root full
++    // 4. Print BTree 
++    // 5. Insert one more entries to watch the shape of the BTree
++    // 6. CloseIndex
++    // 7. DestroyIndex
++    std::cerr << std::endl << "***** In IX Test Case 14 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned numOfTuples = 13;
++    char key[PAGE_SIZE];
++    unsigned count = attribute.length;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entry
++    unsigned i = 1;
++    for (; i <= numOfTuples; i++) {
++        // Prepare a key
++        prepareKeyAndRid(count, i, key, rid);
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        if (i == 5) {
++            // print BTree, by this time the BTree should have 2 level - one root (c*) with two leaf nodes (a*b*, c*d*e*)
++            std::cerr << std::endl;
++            indexManager.printBtree(ixFileHandle, attribute);
++            std::cerr << std::endl;
++        }
++    }
++
++
++    // print BTree, by this time the BTree should have 3 level
++    std::cerr << std::endl << std::endl << "////////////////////////////" << std::endl << std::endl;
++    indexManager.printBtree(ixFileHandle, attribute);
++    std::cerr << std::endl;
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++    //Global Initializations
++
++
++    const std::string indexEmpNameFileName = "EmpName_idx";
++
++    Attribute attrEmpName;
++    attrEmpName.length = PAGE_SIZE / 5;  // each node can only occupy 4 keys
++    attrEmpName.name = "EmpName";
++    attrEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile("EmpName_idx");
++
++    if (testCase_14(indexEmpNameFileName, attrEmpName) == success) {
++        std::cerr << "***** IX Test Case 14 finished. Please check the shape of the B+ Tree. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 14 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
++
++
+diff --git a/ix/ixtest_15.cc b/ix/ixtest_15.cc
+new file mode 100644
+index 0000000..bee743f
+--- /dev/null
++++ b/ix/ixtest_15.cc
+@@ -0,0 +1,75 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_15(const std::string &indexFileName, const Attribute &attribute) {
++    // Checks whether duplicated entries in a page are handled properly.
++    //
++    // Functions tested
++    // 1. OpenIndex
++    // 2. Insert entries with the same key
++    // 3. Print BTree
++    // 4. CloseIndex
++    // 5. DestroyIndex
++    // NOTE: "**" signifies the new functions being tested in this test case.
++
++    std::cerr << std::endl << "***** In IX Test Case 15 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    int key = 300;
++    unsigned numOfTuples = 50;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entries
++    for (unsigned i = 0; i <= numOfTuples; i++) {
++        rid.pageNum = numOfTuples + i + 1;
++        rid.slotNum = i + 2;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // eyeball check: a key only appears once in each node (both inner nodes and leaf nodes)
++    // Actually, this should print out only one page.
++    indexManager.printBtree(ixFileHandle, attribute);
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    indexManager.destroyFile("age_idx");
++
++    if (testCase_15(indexFileName, attrAge) == success) {
++        std::cerr << "***** IX Test Case 15 finished. Please check the shape of the B+ Tree. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Case 15 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_extra_01.cc b/ix/ixtest_extra_01.cc
+new file mode 100644
+index 0000000..4523e77
+--- /dev/null
++++ b/ix/ixtest_extra_01.cc
+@@ -0,0 +1,113 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_extra_1(const string &indexFileName, const Attribute &attribute) {
++    // Checks whether duplicated entries spanning multiple page are handled properly or not.
++    //
++    // Functions tested
++    // 1. Create Index
++    // 2. OpenIndex
++    // 3. Insert entry
++    // 4. Scan entries (EXACT MATCH).
++    // 5. Scan close
++    // 6. CloseIndex
++    // 7. DestroyIndex
++    // NOTE: "**" signifies the new functions being tested in this test case.
++    std::cerr << std::endl << "***** In IX Test Extra Case 01 *****" << std::endl;
++
++    RID rid;
++    unsigned numOfTuples = 2000;
++    unsigned numExtra = 1000;
++    unsigned key;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    int compVal1 = 1234, compVal2 = 4321;
++    unsigned count = 0;
++
++    //create index file(s)
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    //open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entry
++    key = compVal1;
++    for (unsigned i = 1; i <= numOfTuples; i++) {
++        rid.pageNum = i;
++        rid.slotNum = i;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    key = compVal2;
++    for (unsigned i = numOfTuples; i < numOfTuples + numExtra; i++) {
++        rid.pageNum = i;
++        rid.slotNum = i - 5;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // scan
++    rc = indexManager.scan(ixFileHandle, attribute, &compVal1, &compVal1, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // iterate
++    count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++
++        if (rid.pageNum != rid.slotNum) {
++            std::cerr << "Wrong entries output... The test failed" << std::endl;
++        }
++
++        if (count % 100 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++    }
++
++    std::cerr << "Number of scanned entries: " << count << std::endl;
++    if (count != numOfTuples) {
++        std::cerr << "Wrong entries output... The test failed" << std::endl;
++        rc = ix_ScanIterator.close();
++        rc = indexManager.closeFile(ixFileHandle);
++        rc = indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexFileName = "age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    if (testCase_extra_1(indexFileName, attrAge) == success) {
++        std::cerr << "IX_Test Case Extra 01 finished. The result will be examined." << std::endl;
++        return success;
++    } else {
++        std::cerr << "IX_Test Case Extra 01 failed." << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_extra_02.cc b/ix/ixtest_extra_02.cc
+new file mode 100644
+index 0000000..46ba4e2
+--- /dev/null
++++ b/ix/ixtest_extra_02.cc
+@@ -0,0 +1,99 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++void prepareKeyAndRid(const unsigned count, const unsigned i, char *key, RID &rid) {
++    *(unsigned *) key = count;
++    for (unsigned j = 0; j < count; j++) {
++        key[4 + j] = 'a' + i - 1;
++    }
++    rid.pageNum = i;
++    rid.slotNum = i;
++}
++
++int testCase_extra_2(const std::string &indexFileName,
++                     const Attribute &attribute) {
++    // Checks whether the deletion is properly managed (non-lazy deletion)
++    // Functions tested
++    // 1. CreateIndex
++    // 2. OpenIndex
++    // 3. Insert entries to make a 3 level tree 
++    // 4. Print BTree 
++    // 5. Delete the "unsafe one" 
++    // 6. CloseIndex
++    // 7. DestroyIndex
++    std::cerr << std::endl << "***** In IX Test Extra Case 01 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned numOfTuples = 13;
++    char key[PAGE_SIZE];
++    unsigned count = attribute.length;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entries
++    unsigned i = 1;
++    for (; i <= numOfTuples; i++) {
++        prepareKeyAndRid(count, i, key, rid);
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // print BTree, by this time the BTree should have 3 level
++    indexManager.printBtree(ixFileHandle, attribute);
++
++    // delete the 2nd entry
++    prepareKeyAndRid(count, 2, key, rid);
++    rc = indexManager.deleteEntry(ixFileHandle, attribute, key, rid);
++    assert(rc == success && "indexManager::deleteEntry() should not fail.");
++
++    std::cerr << std::endl << std::endl << "/////////////////" << std::endl << std::endl;
++
++    // print BTree, by this time the BTree should have 2 level
++    indexManager.printBtree(ixFileHandle, attribute);
++    std::cerr << std::endl;
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexEmpNameFileName = "EmpName_idx";
++
++    Attribute attrEmpName;
++    attrEmpName.length = PAGE_SIZE / 5;  // Each node could only have 4 children
++    attrEmpName.name = "EmpName";
++    attrEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile("EmpName_idx");
++
++    if (testCase_extra_2(indexEmpNameFileName, attrEmpName) == success) {
++        std::cerr << "IX_Test Case Extra 02 finished. Please check the shape of B+ Tree"
++                     " to make sure non lazy-deletion is applied." << std::endl;
++        return success;
++    } else {
++        std::cerr << "IX_Test Case Extra 02 failed." << std::endl;
++        return fail;
++    }
++
++}
++
++
++
+diff --git a/ix/ixtest_p1.cc b/ix/ixtest_p1.cc
+new file mode 100644
+index 0000000..d06fc41
+--- /dev/null
++++ b/ix/ixtest_p1.cc
+@@ -0,0 +1,160 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_p1(const std::string &indexFileName1, const std::string &indexFileName2, const Attribute &attribute) {
++    // Check whether multiple indexes can be used at the same time.
++    std::cerr << std::endl << "***** In IX Test Private Case 1 *****" << std::endl;
++
++    RID rid;
++    RID rid2;
++    IXFileHandle ixFileHandle1;
++    IXFileHandle ixFileHandle2;
++    IX_ScanIterator ix_ScanIterator1;
++    IX_ScanIterator ix_ScanIterator2;
++    unsigned numOfTuples = 2000;
++    float key;
++    float key2;
++    float compVal = 6500;
++    unsigned inRidPageNumSum = 0;
++    unsigned outRidPageNumSum = 0;
++
++    // create index files
++    RC rc = indexManager.createFile(indexFileName1);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    rc = indexManager.createFile(indexFileName2);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open the index files
++    rc = indexManager.openFile(indexFileName1, ixFileHandle1);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    rc = indexManager.openFile(indexFileName2, ixFileHandle2);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entry
++    for (unsigned i = 1; i <= numOfTuples; i++) {
++        key = (float) i + 87.6;
++        rid.pageNum = i;
++        rid.slotNum = i;
++
++        rc = indexManager.insertEntry(ixFileHandle1, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        rc = indexManager.insertEntry(ixFileHandle2, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        if (key < compVal) {
++            inRidPageNumSum += rid.pageNum;
++        }
++    }
++
++    // insert more entries
++    for (unsigned i = 6000; i <= numOfTuples + 6000; i++) {
++        key = (float) i + 87.6;
++        rid.pageNum = i;
++        rid.slotNum = i - (unsigned) 500;
++
++        // insert entry
++        rc = indexManager.insertEntry(ixFileHandle1, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        // insert entry
++        rc = indexManager.insertEntry(ixFileHandle2, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        if (key < compVal) {
++            inRidPageNumSum += rid.pageNum;
++        }
++    }
++
++    // Conduct a scan
++    rc = indexManager.scan(ixFileHandle1, attribute, NULL, &compVal, true, false, ix_ScanIterator1);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // Conduct a scan
++    rc = indexManager.scan(ixFileHandle2, attribute, NULL, &compVal, true, false, ix_ScanIterator2);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    int returnedCount = 0;
++    while (ix_ScanIterator1.getNextEntry(rid, &key) == success) {
++        returnedCount++;
++
++        if (ix_ScanIterator2.getNextEntry(rid2, &key2) != success) {
++            std::cerr << "Wrong entries output...failure" << std::endl;
++            goto error_close_scan;
++        }
++        if (rid.pageNum != rid2.pageNum) {
++            std::cerr << "Wrong entries output...failure" << std::endl;
++            goto error_close_scan;
++        }
++        if (rid.pageNum % 1000 == 0) {
++            std::cerr << returnedCount << " - returned entries: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++        outRidPageNumSum += rid.pageNum;
++    }
++
++    if (inRidPageNumSum != outRidPageNumSum) {
++        std::cerr << "Wrong entries output...failure" << std::endl;
++        goto error_close_scan;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator1.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    rc = ix_ScanIterator2.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++
++    // Close index file
++    rc = indexManager.closeFile(ixFileHandle1);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    rc = indexManager.closeFile(ixFileHandle2);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName1);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    rc = indexManager.destroyFile(indexFileName2);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++    error_close_scan: //close scan
++    ix_ScanIterator1.close();
++    ix_ScanIterator2.close();
++
++    indexManager.closeFile(ixFileHandle1);
++    indexManager.closeFile(ixFileHandle2);
++
++    indexManager.destroyFile(indexFileName1);
++    indexManager.destroyFile(indexFileName2);
++
++    return fail;
++}
++
++int main() {
++
++    const std::string indexHeightFileName1 = "private_height_idx1";
++    const std::string indexHeightFileName2 = "private_height_idx2";
++    Attribute attrHeight;
++    attrHeight.length = 4;
++    attrHeight.name = "Height";
++    attrHeight.type = TypeReal;
++
++    indexManager.destroyFile(indexHeightFileName1);
++    indexManager.destroyFile(indexHeightFileName2);
++
++    if (testCase_p1(indexHeightFileName1, indexHeightFileName2, attrHeight) == success) {
++        std::cerr << "***** IX Test Private Case 1 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Private Case 1 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
+diff --git a/ix/ixtest_p2.cc b/ix/ixtest_p2.cc
+new file mode 100644
+index 0000000..5c45985
+--- /dev/null
++++ b/ix/ixtest_p2.cc
+@@ -0,0 +1,209 @@
++#include <algorithm>
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_p2(const std::string &indexFileName1, const std::string &indexFileName2, const Attribute &attribute) {
++
++    // insert 30,000 entries to two indexes
++    // scan and delete
++    // insert 20,000 entries to two indexes
++    // scan
++
++    std::cerr << std::endl << "***** In IX Test Private Case 2 *****" << std::endl;
++
++    RID rid;
++    RID rid2;
++    IXFileHandle ixFileHandle1;
++    IXFileHandle ixFileHandle2;
++    IX_ScanIterator ix_ScanIterator1;
++    IX_ScanIterator ix_ScanIterator2;
++    int compVal;
++    int numOfTuples;
++    int A[20000];
++    int B[30000];
++    int count = 0;
++    int key;
++    int key2;
++
++    // create index files
++    RC rc = indexManager.createFile(indexFileName1);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    rc = indexManager.createFile(indexFileName2);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++
++    // open the index files
++    rc = indexManager.openFile(indexFileName1, ixFileHandle1);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    rc = indexManager.openFile(indexFileName2, ixFileHandle2);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++
++    // Prepare key entries
++    numOfTuples = 20000;
++    for (int i = 0; i < numOfTuples; i++) {
++        A[i] = i;
++    }
++
++    // Randomly shuffle the entries
++    std::random_shuffle(A, A + numOfTuples);
++
++    // Insert entries
++    for (int i = 0; i < numOfTuples; i++) {
++        key = A[i];
++        rid.pageNum = i + 1;
++        rid.slotNum = i + 1;
++
++        rc = indexManager.insertEntry(ixFileHandle1, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        rc = indexManager.insertEntry(ixFileHandle2, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    compVal = 5000;
++
++    // Conduct a scan
++    rc = indexManager.scan(ixFileHandle1, attribute, NULL, &compVal, true, true, ix_ScanIterator1);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    rc = indexManager.scan(ixFileHandle2, attribute, NULL, &compVal, true, true, ix_ScanIterator2);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // scan & delete
++    count = 0;
++    while (ix_ScanIterator1.getNextEntry(rid, &key) == success) {
++        if (ix_ScanIterator2.getNextEntry(rid2, &key2) != success
++            || rid.pageNum != rid2.pageNum) {
++            std::cerr << "Wrong entries output...failure" << std::endl;
++            goto error_close_scan;
++        }
++
++        // delete entry
++        rc = indexManager.deleteEntry(ixFileHandle1, attribute, &key, rid);
++        assert(rc == success && "indexManager::deleteEntry() should not fail.");
++
++        rc = indexManager.deleteEntry(ixFileHandle2, attribute, &key, rid);
++        assert(rc == success && "indexManager::deleteEntry() should not fail.");
++
++        count++;
++    }
++    if (count != 5001) {
++        std::cerr << count << " - Wrong entries output...failure" << std::endl;
++        goto error_close_scan;
++    }
++
++    // close scan
++    rc = ix_ScanIterator1.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    rc = ix_ScanIterator2.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++
++    // insert more entries Again
++    numOfTuples = 30000;
++    for (int i = 0; i < numOfTuples; i++) {
++        B[i] = 20000 + i;
++    }
++    std::random_shuffle(B, B + numOfTuples);
++
++    for (int i = 0; i < numOfTuples; i++) {
++        key = B[i];
++        rid.pageNum = i + 20001;
++        rid.slotNum = i + 20001;
++
++        rc = indexManager.insertEntry(ixFileHandle1, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        rc = indexManager.insertEntry(ixFileHandle2, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // scan
++    compVal = 35000;
++
++    rc = indexManager.scan(ixFileHandle1, attribute, NULL, &compVal, true, true, ix_ScanIterator1);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    rc = indexManager.scan(ixFileHandle2, attribute, NULL, &compVal, true, true, ix_ScanIterator2);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    count = 0;
++    while (ix_ScanIterator1.getNextEntry(rid, &key) == success) {
++        if (ix_ScanIterator2.getNextEntry(rid2, &key) != success) {
++            std::cerr << "Wrong entries output...failure" << std::endl;
++            goto error_close_scan;
++        }
++        if (rid.pageNum > 20000 && B[rid.pageNum - 20001] > 35000) {
++            std::cerr << "Wrong entries output...failure" << std::endl;
++            goto error_close_scan;
++        }
++        count++;
++    }
++    if (count != 30000) {
++        std::cerr << count << " - Wrong entries output...failure" << std::endl;
++        goto error_close_scan;
++    }
++
++    //close scan
++    rc = ix_ScanIterator1.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    rc = ix_ScanIterator2.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close index file
++    rc = indexManager.closeFile(ixFileHandle1);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    rc = indexManager.closeFile(ixFileHandle2);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName1);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    rc = indexManager.destroyFile(indexFileName2);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++    error_close_scan: //close scan
++    ix_ScanIterator1.close();
++    ix_ScanIterator2.close();
++
++    indexManager.closeFile(ixFileHandle1);
++    indexManager.closeFile(ixFileHandle2);
++
++    indexManager.destroyFile(indexFileName1);
++    indexManager.destroyFile(indexFileName2);
++
++    return fail;
++}
++
++int main() {
++
++    const std::string indexAgeFileName1 = "private_age_idx1";
++    const std::string indexAgeFileName2 = "private_age_idx2";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "Age";
++    attrAge.type = TypeInt;
++
++    indexManager.destroyFile(indexAgeFileName1);
++    indexManager.destroyFile(indexAgeFileName2);
++
++    if (testCase_p2(indexAgeFileName1, indexAgeFileName2, attrAge) == success) {
++        std::cerr << "***** IX Test Private Case 2 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Private Case 2 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++ 
+diff --git a/ix/ixtest_p3.cc b/ix/ixtest_p3.cc
+new file mode 100644
+index 0000000..d6b3d57
+--- /dev/null
++++ b/ix/ixtest_p3.cc
+@@ -0,0 +1,100 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_p3(const std::string &indexFileName, const Attribute &attribute) {
++    std::cerr << std::endl << "***** In IX Test Private Case 3 *****" << std::endl;
++
++    // Varchar index handling check
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    char key[100];
++    int numOfTuples = 100000;
++    int i = 0;
++    *(int *) key = 6;
++    int count = 0;
++    char lowKey[100];
++    char highKey[100];
++
++    // create index files
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open the index files
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entry
++    for (i = 1; i <= numOfTuples; i++) {
++        sprintf(key + 4, "%06d", i);
++        rid.pageNum = i;
++        rid.slotNum = i % PAGE_SIZE;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    *(int *) lowKey = 6;
++    sprintf(lowKey + 4, "%06d", 90000);
++    *(int *) highKey = 6;
++    sprintf(highKey + 4, "%06d", 100000);
++
++    // Conduct a scan
++    rc = indexManager.scan(ixFileHandle, attribute, lowKey, highKey, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    //iterate
++    count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) != IX_EOF) {
++        key[10] = '\0';
++        if (count % 2000 == 0) {
++            fprintf(stderr, "output: %s\n", key + 4);
++        }
++        count++;
++    }
++
++    if (count != 10001) {
++        std::cerr << "Wrong output count! expected: 10001" << ", actual: " << count << " Failure" << std::endl;
++        ix_ScanIterator.close();
++        indexManager.closeFile(ixFileHandle);
++        indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // close scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close index file
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++
++}
++
++int main() {
++
++    const std::string indexEmpNameFileName1 = "private_empname_shortidx";
++    Attribute attrShortEmpName;
++    attrShortEmpName.length = 20;
++    attrShortEmpName.name = "ShortEmpName";
++    attrShortEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile(indexEmpNameFileName1);
++
++    if (testCase_p3(indexEmpNameFileName1, attrShortEmpName) == success) {
++        std::cerr << "***** IX Test Private Case 3 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Private Case 3 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
++
+diff --git a/ix/ixtest_p4.cc b/ix/ixtest_p4.cc
+new file mode 100644
+index 0000000..42970d3
+--- /dev/null
++++ b/ix/ixtest_p4.cc
+@@ -0,0 +1,159 @@
++
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_p4(const std::string &indexFileName1, const Attribute &attribute1, const std::string &indexFileName2,
++                const Attribute &attribute2) {
++    // Checks whether varchar key is handled properly.
++    std::cerr << std::endl << "***** In IX Test Private Case 4 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle1;
++    IX_ScanIterator ix_ScanIterator1;
++    IXFileHandle ixFileHandle2;
++    IX_ScanIterator ix_ScanIterator2;
++
++    unsigned readPage1 = 0;
++    unsigned writePage1 = 0;
++    unsigned appendPage1 = 0;
++    unsigned readPage2 = 0;
++    unsigned writePage2 = 0;
++    unsigned appendPage2 = 0;
++
++    char key[100];
++    int numOfTuples = 50000;
++    int i = 0;
++    *(int *) key = 5;
++    int count = 0;
++
++    char lowKey[100];
++    char highKey[100];
++
++    // create index files
++    RC rc = indexManager.createFile(indexFileName1);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    rc = indexManager.createFile(indexFileName2);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++
++    // open the index files
++    rc = indexManager.openFile(indexFileName1, ixFileHandle1);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    rc = indexManager.openFile(indexFileName2, ixFileHandle2);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++
++    // insert entries
++    for (i = 1; i <= numOfTuples; i++) {
++        sprintf(key + 4, "%05d", i);
++        rid.pageNum = i;
++        rid.slotNum = i % PAGE_SIZE;
++
++        rc = indexManager.insertEntry(ixFileHandle1, attribute1, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        rc = indexManager.insertEntry(ixFileHandle2, attribute2, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // collect counters
++    rc = ixFileHandle1.collectCounterValues(readPage1, writePage1, appendPage1);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    rc = ixFileHandle2.collectCounterValues(readPage2, writePage2, appendPage2);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    if (writePage1 < 1) {
++        std::cerr << "Did not use disk at all. Test failed." << std::endl;
++        goto error_close_index;
++    }
++
++    // Actually, there should be no difference.
++    if (writePage2 + appendPage2 - writePage1 - appendPage1 > 10) {
++        std::cerr << "Failed to handle space nicely for VarChar keys..." << std::endl;
++        goto error_close_index;
++    }
++
++    *(int *) lowKey = 5;
++    sprintf(lowKey + 4, "%05d", 30801);
++    *(int *) highKey = 5;
++    sprintf(highKey + 4, "%05d", 30900);
++
++    rc = indexManager.scan(ixFileHandle1, attribute1, lowKey, highKey, true, true, ix_ScanIterator1);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    rc = indexManager.scan(ixFileHandle2, attribute2, lowKey, highKey, true, true, ix_ScanIterator2);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    //iterate
++    count = 0;
++    while (ix_ScanIterator1.getNextEntry(rid, &key) != IX_EOF) {
++        if (ix_ScanIterator2.getNextEntry(rid, &key) != success) {
++            std::cerr << "Wrong entries output...failure" << std::endl;
++            goto error_close_index;
++        }
++        count++;
++    }
++    if (count != 100) {
++        std::cerr << "Wrong output count! expected: 100, actual: " << count << " ...Failure" << std::endl;
++        indexManager.closeFile(ixFileHandle1);
++        indexManager.closeFile(ixFileHandle2);
++        indexManager.destroyFile(indexFileName1);
++        indexManager.destroyFile(indexFileName2);
++
++        return fail;
++    }
++
++
++    // Close Scan
++    rc = ix_ScanIterator1.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    rc = ix_ScanIterator2.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++
++    // Close index file
++    rc = indexManager.closeFile(ixFileHandle1);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    rc = indexManager.closeFile(ixFileHandle2);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName1);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    rc = indexManager.destroyFile(indexFileName2);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexEmpNameFileName1 = "private_empname_shortidx";
++    const std::string indexEmpNameFileName2 = "private_empname_longidx";
++    Attribute attrShortEmpName;
++    attrShortEmpName.length = 10;
++    attrShortEmpName.name = "ShortEmpName";
++    attrShortEmpName.type = TypeVarChar;
++    Attribute attrLongEmpName;
++    attrLongEmpName.length = 100;
++    attrLongEmpName.name = "LongEmpName";
++    attrLongEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile(indexEmpNameFileName1);
++    indexManager.destroyFile(indexEmpNameFileName2);
++
++    if (testCase_p4(indexEmpNameFileName1, attrShortEmpName, indexEmpNameFileName2, attrLongEmpName) == success) {
++        std::cerr << "***** IX Test Private Case 4 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Private Case 4 failed. *****" << std::endl;
++        return fail;
++    }
++}
+diff --git a/ix/ixtest_p5.cc b/ix/ixtest_p5.cc
+new file mode 100644
+index 0000000..fe19925
+--- /dev/null
++++ b/ix/ixtest_p5.cc
+@@ -0,0 +1,137 @@
++
++#include "ix.h"
++#include "ix_test_util.h"
++
++void prepareKeyAndRid(const unsigned count, const unsigned i, char *key, RID &rid) {
++    *(int *) key = count;
++    for (unsigned j = 0; j < count; j++) {
++        key[4 + j] = 'a' + i - 1;
++    }
++    rid.pageNum = i;
++    rid.slotNum = i;
++}
++
++int testCase_p5(const std::string &indexFileName, const Attribute &attribute) {
++
++    // Checks whether leaves are linked and the way of conducting search is correct.
++    std::cerr << std::endl << "***** In IX Test Private Case 5 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned numOfTuples = 7;
++    char key[PAGE_SIZE];
++    unsigned count = attribute.length;
++
++    // create index files
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entry
++    unsigned i = 1;
++    for (; i <= numOfTuples; i++) {
++        prepareKeyAndRid(count, i * 10, key, rid);
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // insert the 8th
++    prepareKeyAndRid(count, i++ * 10, key, rid);
++    rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++    assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++    // print BTree, by this time the BTree should have 2 or 3 level 
++    // depend on the design of your root
++    indexManager.printBtree(ixFileHandle, attribute);
++
++    // insert the 9th
++    prepareKeyAndRid(count, i++ * 10, key, rid);
++    rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++    assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++    unsigned readPageCountInsert = 0;
++    unsigned writePageCountInsert = 0;
++    unsigned appendPageCountInsert = 0;
++
++    unsigned readPageCountScan = 0;
++    unsigned writePageCountScan = 0;
++    unsigned appendPageCountScan = 0;
++
++    // collect counters
++    rc = ixFileHandle.collectCounterValues(readPageCountInsert, writePageCountInsert, appendPageCountInsert);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "After Insertion - R:" << readPageCountInsert << " W:" << writePageCountInsert << " A:"
++              << appendPageCountInsert << std::endl;
++
++    rc = indexManager.scan(ixFileHandle, attribute, NULL, NULL, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    rc = ixFileHandle.collectCounterValues(readPageCountScan, writePageCountScan, appendPageCountScan);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "After Initialization of Scan - R:" << readPageCountScan << " W:" << writePageCountScan << " A:"
++              << appendPageCountScan << std::endl;
++
++    count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        std::cerr << "Returned rid:" << rid.pageNum << "," << rid.slotNum << std::endl;
++        count++;
++    }
++
++    rc = ixFileHandle.collectCounterValues(readPageCountScan, writePageCountScan, appendPageCountScan);
++    assert(rc == success && "indexManager::collectCounterValues() should not fail.");
++
++    std::cerr << "After Iteration - R:" << readPageCountScan << " W:" << writePageCountScan << " A:"
++              << appendPageCountScan << std::endl;
++
++    unsigned roughLeafReadCount = readPageCountScan - readPageCountInsert;
++    // If the B+Tree index is 3 level: 3 I/O + 9 scan I/O per entry at maximum  = 12 
++    // If the B+Tree index is 2 level: 2 I/O + 9 scan I/O per entry at maximum  = 11 
++    if (roughLeafReadCount > 12) {
++        std::cerr << "Too many read I/Os for scan: " << roughLeafReadCount << ", the leaf nodes should be linked."
++                  << std::endl;
++        std::cerr << "Check the print out B+ Tree to validate the pages" << std::endl;
++        indexManager.printBtree(ixFileHandle, attribute);
++        indexManager.closeFile(ixFileHandle);
++        indexManager.destroyFile(indexFileName);
++
++        return fail;
++    }
++
++
++    // Close index file
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexEmpNameFileName = "private_empname_idx";
++
++    Attribute attrEmpName;
++    attrEmpName.length = PAGE_SIZE / 4;  // each node could only have 3 children
++    attrEmpName.name = "EmpName";
++    attrEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile(indexEmpNameFileName);
++
++    if (testCase_p5(indexEmpNameFileName, attrEmpName) == success) {
++        std::cerr << "***** IX Test Private Case 5 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Private Case 5 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
+diff --git a/ix/ixtest_p6.cc b/ix/ixtest_p6.cc
+new file mode 100644
+index 0000000..dcb9803
+--- /dev/null
++++ b/ix/ixtest_p6.cc
+@@ -0,0 +1,111 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_p6(const std::string &indexFileName, const Attribute &attribute) {
++    // Checks whether duplicated entries in a page are handled properly.
++
++    std::cerr << std::endl << "***** In IX Test Private Case 6 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned numOfTuples = 90;
++    char key[100];
++    *(int *) key = 5;
++    int count = 0;
++
++    char lowKey[100];
++    char highKey[100];
++
++    int inRidPageNumSum = 0;
++    int outRidPageNumSum = 0;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++
++    // insert entries
++    for (unsigned i = 0; i < numOfTuples; i++) {
++        sprintf(key + 4, "%05d", i % 3);
++
++        rid.pageNum = i;
++        rid.slotNum = i % 3;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++
++        if (i % 3 == 1) {
++            inRidPageNumSum += rid.pageNum;
++        }
++    }
++
++    // eyeball check: a key only appears once in each node (both inner nodes and leaf nodes)
++    // Actually, this should print out only one page.
++    indexManager.printBtree(ixFileHandle, attribute);
++
++    *(int *) lowKey = 5;
++    sprintf(lowKey + 4, "%05d", 1);
++    *(int *) highKey = 5;
++    sprintf(highKey + 4, "%05d", 1);
++
++    // scan
++    rc = indexManager.scan(ixFileHandle, attribute, lowKey, highKey, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    //iterate
++    count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) != IX_EOF) {
++        if (rid.slotNum != 1) {
++            std::cerr << "Wrong entries output...failure" << std::endl;
++            ix_ScanIterator.close();
++            indexManager.closeFile(ixFileHandle);
++            indexManager.destroyFile(indexFileName);
++            return fail;
++        }
++        outRidPageNumSum += rid.pageNum;
++        count++;
++    }
++    std::cerr << "The number of scanned entries: " << count << std::endl;
++    if (count != 30 || outRidPageNumSum != inRidPageNumSum || inRidPageNumSum == 0 || outRidPageNumSum == 0) {
++        std::cerr << "Wrong entries output...failure " << std::endl;
++        indexManager.closeFile(ixFileHandle);
++        indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexEmpNameFileName = "private_empname_shortidx";
++    Attribute attrShortEmpName;
++    attrShortEmpName.length = 10;
++    attrShortEmpName.name = "ShortEmpName";
++    attrShortEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile(indexEmpNameFileName);
++
++    if (testCase_p6(indexEmpNameFileName, attrShortEmpName) == success) {
++        std::cerr << "***** IX Test Private Case 6 finished. The result will be examined. *****" << std::endl;
++        return success;
++    } else {
++        std::cerr << "***** [FAIL] IX Test Private Case 6 failed. *****" << std::endl;
++        return fail;
++    }
++
++}
++
+diff --git a/ix/ixtest_pe_01.cc b/ix/ixtest_pe_01.cc
+new file mode 100644
+index 0000000..2598822
+--- /dev/null
++++ b/ix/ixtest_pe_01.cc
+@@ -0,0 +1,134 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++int testCase_extra_1(const std::string &indexFileName, const Attribute &attribute) {
++    // Checks whether duplicated entries spanning multiple page are handled properly or not.
++    std::cerr << std::endl << "***** In IX Private Test Extra Case 01 *****" << std::endl;
++
++    RID rid;
++    unsigned numOfTuples = 10000;
++    unsigned numExtra = 5000;
++    unsigned key;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    int compVal1 = 9, compVal2 = 15;
++    int count = 0;
++
++    //create index file(s)
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    //open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entry
++    for (unsigned i = 1; i <= numOfTuples; i++) {
++        key = i % 10;
++        rid.pageNum = i;
++        rid.slotNum = i;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    for (unsigned i = numOfTuples; i < numOfTuples + numExtra; i++) {
++        key = i % 10 + 10;
++        rid.pageNum = i;
++        rid.slotNum = i + 10;
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // scan
++    rc = indexManager.scan(ixFileHandle, attribute, &compVal1, &compVal1, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    // iterate
++    count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++
++        if (rid.pageNum != rid.slotNum || key != compVal1) {
++            std::cerr << "Wrong entries output... The test failed" << std::endl;
++        }
++
++        if (count % 100 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++    }
++
++    std::cerr << "Number of scanned entries: " << count << std::endl << std::endl;
++    if (count != 1000) {
++        std::cerr << "Wrong entries output... The test failed" << std::endl;
++        ix_ScanIterator.close();
++        indexManager.closeFile(ixFileHandle);
++        indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // scan
++    rc = indexManager.scan(ixFileHandle, attribute, &compVal2, &compVal2, true, true, ix_ScanIterator);
++    assert(rc == success && "indexManager::scan() should not fail.");
++
++    count = 0;
++    while (ix_ScanIterator.getNextEntry(rid, &key) == success) {
++        count++;
++
++        if (rid.pageNum != (rid.slotNum - 10) || key != compVal2) {
++            std::cerr << "Wrong entries output... The test failed" << std::endl;
++        }
++
++        if (count % 100 == 0) {
++            std::cerr << count << " - Returned rid: " << rid.pageNum << " " << rid.slotNum << std::endl;
++        }
++    }
++
++    std::cerr << "Number of scanned entries: " << count << std::endl;
++    if (count != 500) {
++        std::cerr << "Wrong entries output... The test failed" << std::endl;
++        ix_ScanIterator.close();
++        indexManager.closeFile(ixFileHandle);
++        indexManager.destroyFile(indexFileName);
++        return fail;
++    }
++
++    // Close Scan
++    rc = ix_ScanIterator.close();
++    assert(rc == success && "IX_ScanIterator::close() should not fail.");
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexFileName = "private_extra_age_idx";
++    Attribute attrAge;
++    attrAge.length = 4;
++    attrAge.name = "age";
++    attrAge.type = TypeInt;
++
++    indexManager.destroyFile(indexFileName);
++
++    if (testCase_extra_1(indexFileName, attrAge) == success) {
++        std::cerr << "IX_Test Private Extra Case 01 finished. The result will be examined." << std::endl;
++        return success;
++    } else {
++        std::cerr << "IX_Test Private Extra Case 01 failed." << std::endl;
++        return fail;
++    }
++
++}
+diff --git a/ix/ixtest_pe_02.cc b/ix/ixtest_pe_02.cc
+new file mode 100644
+index 0000000..04ceaf0
+--- /dev/null
++++ b/ix/ixtest_pe_02.cc
+@@ -0,0 +1,98 @@
++#include "ix.h"
++#include "ix_test_util.h"
++
++void prepareKeyAndRid(const unsigned count, const unsigned i, char *key, RID &rid) {
++    *(int *) key = count;
++    for (unsigned j = 0; j < count; j++) {
++        *(key + 4 + j) = 96 + i;
++    }
++    rid.pageNum = i;
++    rid.slotNum = i;
++}
++
++int testCase_Private_Extra_2(const std::string &indexFileName,
++                             const Attribute &attribute) {
++    // Checks whether the deletion is properly managed (non-lazy deletion)
++    std::cerr << std::endl << "***** In IX Private Extra Test Case 02 *****" << std::endl;
++
++    RID rid;
++    IXFileHandle ixFileHandle;
++    IX_ScanIterator ix_ScanIterator;
++    unsigned numOfTuples = 6;
++    char key[PAGE_SIZE];
++    unsigned count = attribute.length;
++
++    // create index file
++    RC rc = indexManager.createFile(indexFileName);
++    assert(rc == success && "indexManager::createFile() should not fail.");
++
++    // open index file
++    rc = indexManager.openFile(indexFileName, ixFileHandle);
++    assert(rc == success && "indexManager::openFile() should not fail.");
++
++    // insert entries
++    unsigned i = 1;
++    for (; i <= numOfTuples; i++) {
++        prepareKeyAndRid(count, i, key, rid);
++
++        rc = indexManager.insertEntry(ixFileHandle, attribute, &key, rid);
++        assert(rc == success && "indexManager::insertEntry() should not fail.");
++    }
++
++    // print BTree, by this time the BTree should have 2 level
++    //    [d]         [c]
++    // [abc def] or [ab cdef]
++    indexManager.printBtree(ixFileHandle, attribute);
++
++    // delete the fifth and sixth entry
++    prepareKeyAndRid(count, 5, key, rid);
++    rc = indexManager.deleteEntry(ixFileHandle, attribute, key, rid);
++    assert(rc == success && "indexManager::deleteEntry() should not fail.");
++
++    // After deleting two entries (e,f):
++    // [abcd]
++    //
++    // If lazy-deletion is applied:
++    //   [d]          [c]
++    // [abc d]   or [ab cd]
++    prepareKeyAndRid(count, 6, key, rid);
++    rc = indexManager.deleteEntry(ixFileHandle, attribute, key, rid);
++    assert(rc == success && "indexManager::deleteEntry() should not fail.");
++
++    std::cerr << std::endl << std::endl << "/////////////////" << std::endl << std::endl;
++    indexManager.printBtree(ixFileHandle, attribute);
++
++    // Close Index
++    rc = indexManager.closeFile(ixFileHandle);
++    assert(rc == success && "indexManager::closeFile() should not fail.");
++
++    // Destroy Index
++    rc = indexManager.destroyFile(indexFileName);
++    assert(rc == success && "indexManager::destroyFile() should not fail.");
++
++    return success;
++}
++
++int main() {
++
++    const std::string indexEmpNameFileName = "private_empname_idx";
++
++    Attribute attrEmpName;
++    attrEmpName.length = PAGE_SIZE / 5;  // Each node could only have 4 children
++    attrEmpName.name = "EmpName";
++    attrEmpName.type = TypeVarChar;
++
++    indexManager.destroyFile(indexEmpNameFileName);
++
++    if (testCase_Private_Extra_2(indexEmpNameFileName, attrEmpName) == success) {
++        std::cerr << "IX_Test Private Extra Case 02 finished. The result will be examined." << std::endl;
++        return success;
++    } else {
++        std::cerr << "IX_Test Private Extra Case 02 failed." << std::endl;
++        return fail;
++    }
++
++}
++
++
++
+diff --git a/ix/makefile b/ix/makefile
+new file mode 100644
+index 0000000..97fd085
+--- /dev/null
++++ b/ix/makefile
+@@ -0,0 +1,75 @@
++
++include ../makefile.inc
++
++all: libix.a ixtest_01 ixtest_02 ixtest_03 ixtest_04 ixtest_05 ixtest_06 ixtest_07 ixtest_08 ixtest_09 ixtest_10 ixtest_11 ixtest_12 ixtest_13 ixtest_14 ixtest_15 ixtest_extra_01 ixtest_extra_02 ixtest_p1 ixtest_p2 ixtest_p3 ixtest_p4 ixtest_p5 ixtest_p6 ixtest_pe_01 ixtest_pe_02
++
++# lib file dependencies
++libix.a: libix.a(ix.o)  # and possibly other .o files
++
++# c file dependencies
++ix.o: ix.h
++
++ix_test_util.o: ix_test_util.h
++ixtest_01.o: ix_test_util.h
++ixtest_02.o: ix_test_util.h
++ixtest_03.o: ix_test_util.h
++ixtest_04.o: ix_test_util.h
++ixtest_05.o: ix_test_util.h
++ixtest_06.o: ix_test_util.h
++ixtest_07.o: ix_test_util.h
++ixtest_08.o: ix_test_util.h
++ixtest_09.o: ix_test_util.h
++ixtest_10.o: ix_test_util.h
++ixtest_11.o: ix_test_util.h
++ixtest_12.o: ix_test_util.h
++ixtest_13.o: ix_test_util.h
++ixtest_14.o: ix_test_util.h
++ixtest_15.o: ix_test_util.h
++ixtest_extra_01.o: ix_test_util.h
++ixtest_extra_02.o: ix_test_util.h
++ixtest_p1.o: ix_test_util.h
++ixtest_p2.o: ix_test_util.h
++ixtest_p3.o: ix_test_util.h
++ixtest_p4.o: ix_test_util.h
++ixtest_p5.o: ix_test_util.h
++ixtest_p6.o: ix_test_util.h
++ixtest_pe_01.o: ix_test_util.h
++ixtest_pe_02.o: ix_test_util.h
++
++# binary dependencies
++ixtest_01: ixtest_01.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_02: ixtest_02.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_03: ixtest_03.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_04: ixtest_04.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_05: ixtest_05.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_06: ixtest_06.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_07: ixtest_07.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_08: ixtest_08.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_09: ixtest_09.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_10: ixtest_10.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_11: ixtest_11.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_12: ixtest_12.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_13: ixtest_13.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_14: ixtest_14.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_15: ixtest_15.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_extra_01: ixtest_extra_01.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_extra_02: ixtest_extra_02.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_p1: ixtest_p1.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_p2: ixtest_p2.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_p3: ixtest_p3.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_p4: ixtest_p4.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_p5: ixtest_p5.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_p6: ixtest_p6.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_pe_01: ixtest_pe_01.o libix.a $(CODEROOT)/rbf/librbf.a
++ixtest_pe_02: ixtest_pe_02.o libix.a $(CODEROOT)/rbf/librbf.a
++
++# dependencies to compile used libraries
++.PHONY: $(CODEROOT)/rbf/librbf.a
++$(CODEROOT)/rbf/librbf.a:
++	$(MAKE) -C $(CODEROOT)/rbf librbf.a
++
++.PHONY: clean
++clean:
++	-rm *.o *.a ixtest_01 ixtest_02 ixtest_03 ixtest_04 ixtest_05 ixtest_06 ixtest_07 ixtest_08 ixtest_09 ixtest_10 ixtest_11 ixtest_12 ixtest_13 ixtest_14 ixtest_15 ixtest_extra_01 ixtest_extra_02 ixtest_p1 ixtest_p2 ixtest_p3 ixtest_p4 ixtest_p5 ixtest_p6 ixtest_pe_01 ixtest_pe_02 *idx
++	$(MAKE) -C $(CODEROOT)/rbf clean
++	$(MAKE) -C $(CODEROOT)/rm clean
+\ No newline at end of file
+diff --git a/project3_report.txt b/project3_report.txt
+new file mode 100644
+index 0000000..2571533
+--- /dev/null
++++ b/project3_report.txt
+@@ -0,0 +1,38 @@
++1. Basic information
++Team number (e.g., 01) : 
++#1 Student ID : 
++#1 Student Name : 
++#2 Student ID : 
++#2 Student Name : 
++OS (bit) :
++gcc version :
++
++
++2. Meta-data page in an index file
++- Show your meta-data page of an index design if you have any. 
++
++
++3. Index Entry Format
++- Show your index entry design (structure). 
++
++
++4. Page Format
++- Show your internal-page (non-leaf node) design.
++
++- Show your leaf-page (leaf node) design.
++
++
++5. Implementation Detail
++- Have you added your own source file (.cc or .h)?
++
++- Have you implemented non-lazy deletion? Choose Yes or No: 
++
++- Have you implemented duplicated key handling that can span multiple pages? Choose Yes or No: 
++  If yes, please explain briefly how you have implemented this feature.
++
++- Other implementation details:
++
++
++6. Other (optional)
++- Freely use this section to tell us about things that are related to the project 3, but not related to the other sections (optional)
++
+-- 
+2.21.0 (Apple Git-120)
+
